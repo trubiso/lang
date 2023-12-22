@@ -1,7 +1,5 @@
 use std::fmt::Display;
 
-pub type Spanned<T> = (T, Span);
-
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Span {
 	pub file_id: usize,
@@ -80,4 +78,24 @@ impl chumsky::Span for Span {
 
 pub trait IntoSpan {
 	fn span(&self) -> Span;
+}
+
+pub type SpannedRaw<T> = (T, Span);
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+pub struct Spanned<T> {
+	pub span: Span,
+	pub value: T
+}
+
+impl<T> IntoSpan for Spanned<T> {
+	fn span(&self) -> Span {
+		self.span.clone()
+	}
+}
+
+impl<T> IntoSpan for SpannedRaw<T> {
+	fn span(&self) -> Span {
+		self.1.clone()
+	}
 }

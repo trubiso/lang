@@ -11,9 +11,13 @@ use codespan_reporting::{
 use span::Span;
 use std::fs;
 
+pub mod ident;
+pub mod join;
 pub mod lexer;
 pub mod parser;
 pub mod span;
+pub mod r#type;
+pub mod typed_ident;
 
 fn main() {
 	let sources = vec!["code"];
@@ -45,9 +49,7 @@ fn main() {
 			}
 		};
 		// let lexed_iter: CodeStream =
-			Stream::from_iter(Span::new(id, code_len..code_len), tokens.into_iter());
-		
-
+		Stream::from_iter(Span::new(id, code_len..code_len), tokens.into_iter());
 	}
 
 	if !all_diagnostics.is_empty() {

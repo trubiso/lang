@@ -1,4 +1,4 @@
-use crate::span::{Span, Spanned};
+use crate::span::{Span, SpannedRaw};
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use derive_more::Display;
 use logos::{Lexer, Logos};
@@ -24,7 +24,7 @@ macro_rules! token_keyword {
 	($($match:expr => $to:ident,)*) => {
 		tok_venum!{Keyword {$($match => $to,)*}}
 
-		impl $crate::parser::types::Ident {
+		impl $crate::ident::Ident {
 			pub fn is_keyword(&self, keyword: Keyword) -> bool {
 				match self.as_keyword() {
 					Some(x) => x == keyword,
@@ -34,7 +34,7 @@ macro_rules! token_keyword {
 
 			pub fn as_keyword(&self) -> Option<Keyword> {
 				match self {
-					Self::Named(_, x) => {
+					Self::Named(x) => {
 						$(if x == $match { return Some(Keyword::$to); })*
 						return None;
 					}
@@ -138,12 +138,12 @@ def_token!(
 	}
 );
 
-type Output = Vec<Spanned<Token>>;
+type Output = Vec<SpannedRaw<Token>>;
 pub fn lex(code: &str, file_id: usize) -> Result<Output, (Output, Vec<Diagnostic<usize>>)> {
 	let lex = Token::lexer(code).spanned();
 	let tokens = lex
 		.map(|(token, range)| (token, Span::new(file_id, range)))
-		.collect::<Vec<Spanned<Result<Token, ()>>>>();
+		.collect::<Vec<SpannedRaw<Result<Token, ()>>>>();
 	let mut diagnostics = vec![];
 	for token in tokens.clone() {
 		if token.0.is_err() {
