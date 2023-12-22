@@ -11,11 +11,15 @@ use codespan_reporting::{
 use span::Span;
 use std::fs;
 
+pub mod expr;
+pub mod func;
 pub mod ident;
 pub mod join;
 pub mod lexer;
 pub mod parser;
+pub mod scope;
 pub mod span;
+pub mod stmt;
 pub mod r#type;
 pub mod typed_ident;
 
