@@ -58,6 +58,7 @@ fn declare_stmt() -> token_parser!(ParserStmt) {
 
 pub fn stmt(_scope: ScopeRecursive) -> token_parser!(ParserStmt) {
 	choice((let_stmt(), mut_stmt(), create_stmt(), declare_stmt()))
+		.then_ignore(jpunct!(Semicolon).repeated().at_least(1))
 }
 
 pub fn bare_scope() -> token_parser!(ParserScope) {
