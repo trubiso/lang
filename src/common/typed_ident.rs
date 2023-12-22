@@ -1,4 +1,4 @@
-use crate::{ident::Ident, r#type::Type};
+use crate::common::{ident::Ident, r#type::Type};
 use derive_more::Display;
 
 #[derive(Debug, Display, Clone)]

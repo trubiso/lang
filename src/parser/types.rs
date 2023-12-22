@@ -1,6 +1,6 @@
 use crate::{
 	lexer::Token,
-	span::{Span, Spanned},
+	common::span::{Span, Spanned},
 };
 use chumsky::Stream;
 use std::vec::IntoIter;

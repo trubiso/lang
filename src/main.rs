@@ -1,3 +1,5 @@
+// TODO: (global) write more /// and //! comments
+
 use chumsky::Stream;
 use codespan_reporting::{
 	diagnostic::Severity,
@@ -8,20 +10,12 @@ use codespan_reporting::{
 	},
 };
 // use parser::types::CodeStream;
-use span::Span;
+use common::span::Span;
 use std::fs;
 
-pub mod expr;
-pub mod func;
-pub mod ident;
-pub mod join;
+pub mod common;
 pub mod lexer;
 pub mod parser;
-pub mod scope;
-pub mod span;
-pub mod stmt;
-pub mod r#type;
-pub mod typed_ident;
 
 fn main() {
 	let sources = vec!["code"];

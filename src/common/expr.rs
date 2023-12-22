@@ -1,4 +1,4 @@
-use crate::{ident::Ident, lexer::Operator};
+use crate::{common::ident::Ident, lexer::Operator};
 
 pub enum Expr {
 	NumberLiteral(String),

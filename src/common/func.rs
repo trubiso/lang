@@ -1,4 +1,4 @@
-use crate::{r#type::Type, typed_ident::TypedIdent, ident::Ident};
+use crate::common::{ident::Ident, r#type::Type, typed_ident::TypedIdent};
 
 pub struct Func<Sc> {
 	pub return_ty: Type,

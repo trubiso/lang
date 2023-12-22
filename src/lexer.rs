@@ -1,4 +1,4 @@
-use crate::span::{Span, SpannedRaw};
+use crate::common::span::{Span, SpannedRaw};
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use derive_more::Display;
 use logos::{Lexer, Logos};
@@ -24,7 +24,7 @@ macro_rules! token_keyword {
 	($($match:expr => $to:ident,)*) => {
 		tok_venum!{Keyword {$($match => $to,)*}}
 
-		impl $crate::ident::Ident {
+		impl $crate::common::ident::Ident {
 			pub fn is_keyword(&self, keyword: Keyword) -> bool {
 				match self.as_keyword() {
 					Some(x) => x == keyword,

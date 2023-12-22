@@ -1,4 +1,4 @@
-use crate::{ident::Ident, typed_ident::TypedIdent, expr::Expr, func::Func, scope::Scope};
+use crate::common::{ident::Ident, typed_ident::TypedIdent, expr::Expr, func::Func, scope::Scope};
 
 pub enum Stmt<Sc: Scope> {
 	Create {

@@ -1,4 +1,4 @@
-use crate::{typed_ident::TypedIdent, r#type::Type};
+use crate::common::{typed_ident::TypedIdent, r#type::Type};
 
 /// An Ident is a name given to a variable, a function or a type.
 #[derive(Debug, Clone)]
