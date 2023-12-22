@@ -1,5 +1,6 @@
 use crate::common::{ident::Ident, typed_ident::TypedIdent, expr::Expr, func::Func, scope::Scope};
 
+#[derive(Debug, Clone)]
 pub enum Stmt<Sc: Scope> {
 	Create {
 		ty_id: TypedIdent,

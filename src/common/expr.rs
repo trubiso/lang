@@ -1,5 +1,6 @@
 use crate::{common::ident::Ident, lexer::Operator};
 
+#[derive(Debug, Clone)]
 pub enum Expr {
 	NumberLiteral(String),
 	Identifier(Ident),
