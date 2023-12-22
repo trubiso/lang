@@ -9,8 +9,8 @@ use codespan_reporting::{
 		termcolor::{ColorChoice, StandardStream},
 	},
 };
-// use parser::types::CodeStream;
 use common::span::Span;
+use parser::types::CodeStream;
 use std::fs;
 
 pub mod common;
@@ -46,8 +46,23 @@ fn main() {
 				tokens
 			}
 		};
-		// let lexed_iter: CodeStream =
-		Stream::from_iter(Span::new(id, code_len..code_len), tokens.into_iter());
+		let lexed_iter: CodeStream =
+			Stream::from_iter(Span::new(id, code_len..code_len), tokens.into_iter());
+
+		let parsed = match parser::parse(lexed_iter) {
+			Ok(scope) => scope,
+			Err((scope, diagnostics)) => {
+				for diagnostic in diagnostics {
+					if !have_errors && diagnostic.severity == Severity::Error {
+						have_errors = true;
+					}
+					all_diagnostics.push(diagnostic);
+				}
+				scope
+			}
+		};
+
+		dbg!(parsed);
 	}
 
 	if !all_diagnostics.is_empty() {

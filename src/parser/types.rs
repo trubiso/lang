@@ -3,7 +3,7 @@ use crate::{
 		expr::Expr,
 		func::Func,
 		scope::Scope,
-		span::{Span, Spanned},
+		span::{Span, SpannedRaw},
 		stmt::Stmt,
 	},
 	lexer::Token,
@@ -11,7 +11,7 @@ use crate::{
 use chumsky::{error::Simple, recursive::Recursive, Stream};
 use std::vec::IntoIter;
 
-pub type CodeStream<'a> = Stream<'a, Token, Span, IntoIter<Spanned<Token>>>;
+pub type CodeStream<'a> = Stream<'a, Token, Span, IntoIter<SpannedRaw<Token>>>;
 
 pub type TokenRecursive<'a, T> = Recursive<'a, Token, T, Simple<Token, Span>>;
 pub type ScopeRecursive<'a> = TokenRecursive<'a, ParserScope>;
