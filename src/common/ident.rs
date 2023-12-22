@@ -1,4 +1,4 @@
-use crate::common::{typed_ident::TypedIdent, r#type::Type};
+use crate::common::{r#type::Type, typed_ident::TypedIdent};
 
 /// An Ident is a name given to a variable, a function or a type.
 #[derive(Debug, Clone)]
@@ -24,7 +24,7 @@ impl std::fmt::Display for Ident {
 					.reduce(|acc, b| acc + "::" + &b)
 					.unwrap(),
 			),
-			Self::Discarded => f.write_str("~"),
+			Self::Discarded => f.write_str("_"),
 		}
 	}
 }

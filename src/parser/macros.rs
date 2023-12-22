@@ -1,18 +1,18 @@
 #[macro_export]
 macro_rules! token_parser {
 	($ty:ty) => {
-		impl chumsky::Parser<$crate::lexer::Token, $ty, Error = chumsky::error::Simple<$crate::lexer::Token, $crate::span::Span>>
+		impl chumsky::Parser<$crate::lexer::Token, $ty, Error = chumsky::error::Simple<$crate::lexer::Token, $crate::common::span::Span>>
 	};
 
 	($ty:ty : '_) => {
-		impl chumsky::Parser<$crate::lexer::Token, $ty, Error = chumsky::error::Simple<$crate::lexer::Token, $crate::span::Span>> + '_
+		impl chumsky::Parser<$crate::lexer::Token, $ty, Error = chumsky::error::Simple<$crate::lexer::Token, $crate::common::span::Span>> + '_
 	};
 }
 
 #[macro_export]
 macro_rules! ident {
 	($span:expr, $str:expr) => {
-		$crate::parser::types::Ident::Named($span, $str.to_string())
+		$crate::common::ident::Ident::Named($span, $str.to_string())
 	};
 }
 
@@ -85,9 +85,9 @@ macro_rules! builtin {
 
 #[macro_export]
 macro_rules! force_token {
-	($value:expr => Identifier, $span:expr) => {
+	($value:expr => Identifier) => {
 		match $value {
-			$crate::lexer::Token::Identifier(x) => $crate::parser::types::Ident::Named($span, x),
+			$crate::lexer::Token::Identifier(x) => $crate::common::ident::Ident::Named(x),
 			_ => unreachable!(),
 		}
 	};
@@ -97,7 +97,7 @@ macro_rules! force_token {
 			_ => unreachable!(),
 		}
 	};
-	($value:expr => $kind:ident, $span:expr) => {
+	($value:expr => $kind:ident) => {
 		force_token!($value => $kind)
 	};
 }
@@ -107,35 +107,35 @@ macro_rules! assg {
 	($ident:ident) => {
 		$crate::parser::ident::ident()
 			.then(jassg_op!($ident))
-			.then(expr())
+			.then($crate::parser::expr::expr())
 	};
 	(ignore $ident:ident) => {
 		$crate::parser::ident::ident()
 			.then_ignore(jassg_op!($ident))
-			.then(expr())
+			.then($crate::parser::expr::expr())
 	};
 	(noident $ident:ident) => {
-		jassg_op!($ident).then(expr())
+		jassg_op!($ident).then($crate::parser::expr::expr())
 	};
 	(noident ignore $ident:ident) => {
-		jassg_op!($ident).ignore_then(expr())
+		jassg_op!($ident).ignore_then($crate::parser::expr::expr())
 	};
 	($op:ident -> $ident:ident) => {
 		$crate::parser::ident::ident()
 			.then(jop!($op))
 			.then(jassg_op!($ident))
-			.then(expr())
+			.then($crate::parser::expr::expr())
 	};
 	($op:ident -> ignore $ident:ident) => {
 		$crate::parser::ident::ident()
 			.then_ignore(jop!($op))
 			.then_ignore(jassg_op!($ident))
-			.then(expr())
+			.then($crate::parser::expr::expr())
 	};
 	($op:ident -> noident $ident:ident) => {
-		jop!($op).then(jassg_op!($ident)).then(expr())
+		jop!($op).then(jassg_op!($ident)).then($crate::parser::expr::expr())
 	};
 	($op:ident -> noident ignore $ident:ident) => {
-		jop!($op).then(jassg_op!($ident)).ignore_then(expr())
+		jop!($op).then(jassg_op!($ident)).ignore_then($crate::parser::expr::expr())
 	};
 }

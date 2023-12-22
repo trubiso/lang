@@ -90,6 +90,8 @@ macro_rules! def_token {
 		token_keyword!{
 			"func" => Function,
 			"let" => Let,
+			"mut" => Mut,
+			"_" => DontCare,
 		}
 	};
 }

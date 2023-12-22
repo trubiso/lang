@@ -71,6 +71,34 @@ impl BuiltInType {
 			Self::Void => 0,
 		}
 	}
+
+	pub fn from_name(name: &str) -> Option<BuiltInType> {
+		let result = match name {
+			"void" => Some(BuiltInType::Void),
+			"bool" => Some(BuiltInType::Integer { bits: 1, signed: false }),
+			name => {
+				match name[1..].parse() {
+					Ok(bits) => {
+						if name.starts_with("u") {
+							Some(BuiltInType::Integer { bits, signed: false })
+						} else if name.starts_with("i") {
+							Some(BuiltInType::Integer { bits, signed: true })
+						} else if name.starts_with("f") {
+							if bits > 128 {
+								None
+							} else {
+								Some(BuiltInType::Float { bits: bits as u8 })
+							}
+						} else {
+							None
+						}
+					},
+					Err(_) => None,
+				}
+			}
+		};
+		result.filter(|x| x.is_valid())
+	}
 }
 
 impl std::fmt::Display for Type {
