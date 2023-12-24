@@ -11,3 +11,5 @@ i92 sub(i92 a, i92 b) {
 	let d = b;
 	return c;
 }
+
+T add<T>(T a, T b) => a + b;

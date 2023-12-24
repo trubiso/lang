@@ -1,7 +1,8 @@
 use crate::{
-	common::typed_ident::TypedIdent,
+	common::{ident::Ident, typed_ident::TypedIdent},
 	parser::{
 		expr::expr,
+		ident::ident,
 		ty_ident::{ty_ident, ty_ident_nodiscard},
 		types::{ParserFunc, ParserScope, ParserStmt, ScopeRecursive},
 	},
@@ -10,6 +11,10 @@ use chumsky::prelude::*;
 
 fn func_args() -> token_parser!(Vec<TypedIdent>) {
 	parened!(ty_ident(),)
+}
+
+fn func_generics() -> token_parser!(Vec<Ident>) {
+	angled!(ident(),).or_not().map(|x| x.unwrap_or_default())
 }
 
 fn func_body(scope: ScopeRecursive) -> token_parser!(ParserScope : '_) {
@@ -26,14 +31,15 @@ fn func_body(scope: ScopeRecursive) -> token_parser!(ParserScope : '_) {
 
 pub fn func_stmt(scope: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
 	ty_ident_nodiscard()
+		.then(func_generics())
 		.then(func_args())
 		.then(func_body(scope))
-		.map(|((ty_id, args), body)| ParserStmt::Func {
+		.map(|(((ty_id, generics), args), body)| ParserStmt::Func {
 			id: ty_id.ident,
 			func: ParserFunc {
 				return_ty: ty_id.ty,
 				args,
-				generics: Vec::new(), // TODO: generics
+				generics,
 				body,
 			},
 		})
