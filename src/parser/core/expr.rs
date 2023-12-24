@@ -1,4 +1,6 @@
 use crate::common::expr::Expr;
+use crate::common::span::Span;
+use crate::lexer::Token;
 use crate::parser::types::ScopeRecursive;
 use crate::parser::{
 	core::ident::ident,
@@ -32,20 +34,24 @@ macro_rules! literal_parser {
 	};
 }
 
-fn atom(e: ExprRecursive) -> token_parser!(ParserExpr : '_) {
+fn atom<'a>(
+	e: ExprRecursive<'a>,
+	s: ScopeRecursive<'a>,
+) -> impl Parser<Token, ParserExpr, Error = Simple<Token, Span>> + 'a {
 	choice((
 		parened!(e),
 		literal_parser!(NumberLiteral),
 		// TODO: potentially_qualified_ident
 		ident().map(|x| Expr::Identifier(x)),
+		braced!(s).map(|x| Expr::Scope(x)),
 	))
 }
 
-pub fn expr(scope: ScopeRecursive) -> token_parser!(ParserExpr : '_) {
+pub fn expr(s: ScopeRecursive) -> token_parser!(ParserExpr : '_) {
 	recursive(|e| {
-		let neg_parser = unop_parser!(Neg => atom(e.clone()));
+		let neg_parser = unop_parser!(Neg => atom(e.clone(), s.clone()));
 		let sd_parser = binop_parser!(Star Div => neg_parser);
 		let pn_parser = binop_parser!(Plus Neg => sd_parser);
-		choice((braced!(scope).map(|x| Expr::Scope(x)), pn_parser()))
+		pn_parser()
 	})
 }
