@@ -1,6 +1,7 @@
 use self::{
-	ty_ident::{ty_ident, ty_ident_nodiscard},
-	types::{CodeStream, ParserScope, ParserStmt, ScopeRecursive},
+	stmt::stmt,
+	ty_ident::ty_ident,
+	types::{CodeStream, ParserScope},
 };
 use chumsky::{error::SimpleReason, prelude::*};
 use codespan_reporting::diagnostic::{Diagnostic, Label};
@@ -11,55 +12,9 @@ pub mod types;
 
 pub mod expr;
 pub mod ident;
+mod stmt;
 pub mod ty;
 pub mod ty_ident;
-
-fn let_stmt() -> token_parser!(ParserStmt) {
-	jkeyword!(Let)
-		.ignore_then(assg!(ignore Set))
-		.map(|(ident, expr)| ParserStmt::Create {
-			ty_id: ident.infer_type(),
-			mutable: false,
-			value: expr,
-		})
-}
-
-fn mut_stmt() -> token_parser!(ParserStmt) {
-	jkeyword!(Mut)
-		.ignore_then(assg!(ignore Set))
-		.map(|(id, expr)| ParserStmt::Create {
-			ty_id: id.infer_type(),
-			mutable: true,
-			value: expr,
-		})
-}
-
-fn create_stmt() -> token_parser!(ParserStmt) {
-	jkeyword!(Mut)
-		.or_not()
-		.then(ty_ident())
-		.then(assg!(noident ignore Set))
-		.map(|((mutable, ty_id), expr)| ParserStmt::Create {
-			ty_id,
-			mutable: mutable.is_some(),
-			value: expr,
-		})
-}
-
-fn declare_stmt() -> token_parser!(ParserStmt) {
-	jkeyword!(Mut)
-		.or_not()
-		.then(ty_ident_nodiscard())
-		.map(|(mutable, ty_id)| ParserStmt::Declare {
-			ty_id,
-			mutable: mutable.is_some(),
-		})
-}
-
-pub fn stmt(_scope: ScopeRecursive) -> token_parser!(ParserStmt) {
-	choice((let_stmt(), mut_stmt(), create_stmt(), declare_stmt()))
-		.then_ignore(jpunct!(Semicolon).repeated().at_least(1))
-}
 
 pub fn bare_scope() -> token_parser!(ParserScope) {
 	recursive(|scope| stmt(scope).repeated().map(|stmts| ParserScope { stmts }))
