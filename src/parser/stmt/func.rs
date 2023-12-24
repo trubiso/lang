@@ -3,14 +3,18 @@ use crate::{
 	parser::{
 		expr::expr,
 		ident::ident,
-		ty_ident::ty_ident_nodiscard,
+		ty::ty,
+		ty_ident::{ty_ident, ty_ident_nodiscard},
 		types::{ParserScope, ParserStmt, ScopeRecursive},
 	},
 };
 use chumsky::prelude::*;
 
 fn func_args() -> token_parser!(Vec<TypedIdent>) {
-	parened!(ty_ident_nodiscard(),)
+	parened!(choice((
+		ty_ident(),
+		ty().map(|ty| ty.add_discarded_ident())
+	)),)
 }
 
 fn func_generics() -> token_parser!(Vec<Ident>) {

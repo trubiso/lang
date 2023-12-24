@@ -1,4 +1,4 @@
-use crate::common::{ident::Ident, join::Join};
+use crate::common::{ident::Ident, join::Join, typed_ident::TypedIdent};
 
 // TODO: figure out Refs and Ptrs, eg:
 //     Ref(Box<Self>, bool), // bool = mut
@@ -30,6 +30,15 @@ pub enum Type {
 	/// A Type not specified by the user which the inferring algorithm must turn
 	/// into a proper Type.
 	Inferred,
+}
+
+impl Type {
+	pub fn add_discarded_ident(self) -> TypedIdent {
+		TypedIdent {
+			ty: self,
+			ident: Ident::Discarded,
+		}
+	}
 }
 
 // TODO: figure out strings and chars
@@ -75,27 +84,31 @@ impl BuiltInType {
 	pub fn from_name(name: &str) -> Option<BuiltInType> {
 		let result = match name {
 			"void" => Some(BuiltInType::Void),
-			"bool" => Some(BuiltInType::Integer { bits: 1, signed: false }),
-			name => {
-				match name[1..].parse() {
-					Ok(bits) => {
-						if name.starts_with("u") {
-							Some(BuiltInType::Integer { bits, signed: false })
-						} else if name.starts_with("i") {
-							Some(BuiltInType::Integer { bits, signed: true })
-						} else if name.starts_with("f") {
-							if bits > 128 {
-								None
-							} else {
-								Some(BuiltInType::Float { bits: bits as u8 })
-							}
-						} else {
+			"bool" => Some(BuiltInType::Integer {
+				bits: 1,
+				signed: false,
+			}),
+			name => match name[1..].parse() {
+				Ok(bits) => {
+					if name.starts_with("u") {
+						Some(BuiltInType::Integer {
+							bits,
+							signed: false,
+						})
+					} else if name.starts_with("i") {
+						Some(BuiltInType::Integer { bits, signed: true })
+					} else if name.starts_with("f") {
+						if bits > 128 {
 							None
+						} else {
+							Some(BuiltInType::Float { bits: bits as u8 })
 						}
-					},
-					Err(_) => None,
+					} else {
+						None
+					}
 				}
-			}
+				Err(_) => None,
+			},
 		};
 		result.filter(|x| x.is_valid())
 	}
