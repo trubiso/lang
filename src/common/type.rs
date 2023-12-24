@@ -43,6 +43,7 @@ impl Type {
 }
 
 // TODO: figure out strings and chars
+// TODO: isize, usize
 
 /// A `BuiltInType` is a kind of `Type` that comes with the language itself.
 #[derive(Debug, Clone, PartialEq, Eq)]

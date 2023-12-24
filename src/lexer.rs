@@ -78,6 +78,7 @@ macro_rules! def_token {
 		#[logos(skip r"//[^\n]*")] // line comment
 		#[logos(skip r"/\*(?:[^*]|\*[^/])*\*/")] // block comment
 		pub enum Token {
+			// TODO: parse i/u with arbitrary quantities
 			#[regex(r"(?:([0-9][0-9_]*|(?:[0-9][0-9_]*)?\.[0-9][0-9_]*|0b[01][01_]*|0o[0-7][0-7_]*)(i(?:z|8|16|32|64|128)|u(?:z|8|16|32|64|128)?|f(?:16|32|64|128)?)?|(0x[0-9a-fA-F][0-9a-fA-F_]*)(i(?:z|8|16|32|64|128)|u(?:z|8|16|32|64|128)?|p(?:16|32|64|128)?)?)", lex_to_str)]
 			NumberLiteral(String),
 			#[regex(r"'.'", lex_to_str)]
