@@ -1,4 +1,6 @@
-use crate::common::{ident::Ident, typed_ident::TypedIdent, expr::Expr, func::Func, scope::Scope};
+use crate::common::{
+	expr::Expr, func::FuncSignature, ident::Ident, scope::Scope, typed_ident::TypedIdent,
+};
 
 #[derive(Debug, Clone)]
 pub enum Stmt<Sc: Scope> {
@@ -17,7 +19,8 @@ pub enum Stmt<Sc: Scope> {
 	},
 	Func {
 		id: Ident,
-		func: Func<Sc>,
+		signature: FuncSignature,
+		body: Option<Sc>,
 	},
 	Return {
 		value: Expr,

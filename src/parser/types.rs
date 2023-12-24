@@ -1,7 +1,6 @@
 use crate::{
 	common::{
 		expr::Expr,
-		func::Func,
 		scope::Scope,
 		span::{Span, SpannedRaw},
 		stmt::Stmt,
@@ -18,7 +17,6 @@ pub type ScopeRecursive<'a> = TokenRecursive<'a, ParserScope>;
 pub type ExprRecursive<'a> = TokenRecursive<'a, ParserExpr>;
 
 pub type ParserExpr = Expr;
-pub type ParserFunc = Func<ParserScope>;
 pub type ParserStmt = Stmt<ParserScope>;
 
 #[derive(Debug, Clone)]

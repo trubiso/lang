@@ -13,3 +13,5 @@ i92 sub(i92 a, i92 b) {
 }
 
 T add<T>(T a, T b) => a + b;
+
+D cast<D, S>(S object);
