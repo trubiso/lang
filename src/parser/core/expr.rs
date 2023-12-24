@@ -1,4 +1,5 @@
 use crate::common::expr::Expr;
+use crate::parser::types::ScopeRecursive;
 use crate::parser::{
 	core::ident::ident,
 	types::{ExprRecursive, ParserExpr},
@@ -40,11 +41,11 @@ fn atom(e: ExprRecursive) -> token_parser!(ParserExpr : '_) {
 	))
 }
 
-pub fn expr() -> token_parser!(ParserExpr) {
+pub fn expr(scope: ScopeRecursive) -> token_parser!(ParserExpr : '_) {
 	recursive(|e| {
 		let neg_parser = unop_parser!(Neg => atom(e.clone()));
 		let sd_parser = binop_parser!(Star Div => neg_parser);
 		let pn_parser = binop_parser!(Plus Neg => sd_parser);
-		pn_parser()
+		choice((braced!(scope).map(|x| Expr::Scope(x)), pn_parser()))
 	})
 }

@@ -104,43 +104,43 @@ macro_rules! force_token {
 
 #[macro_export]
 macro_rules! assg {
-	($ident:ident) => {
+	($s:expr, $ident:ident) => {
 		$crate::parser::core::ident::ident()
 			.then(jassg_op!($ident))
-			.then($crate::parser::core::expr::expr())
+			.then($crate::parser::core::expr::expr($s))
 	};
-	(ignore $ident:ident) => {
+	($s:expr, ignore $ident:ident) => {
 		$crate::parser::core::ident::ident()
 			.then_ignore(jassg_op!($ident))
-			.then($crate::parser::core::expr::expr())
+			.then($crate::parser::core::expr::expr($s))
 	};
-	(noident $ident:ident) => {
-		jassg_op!($ident).then($crate::parser::core::expr::expr())
+	($s:expr, noident $ident:ident) => {
+		jassg_op!($ident).then($crate::parser::core::expr::expr($s))
 	};
-	(noident ignore $ident:ident) => {
-		jassg_op!($ident).ignore_then($crate::parser::core::expr::expr())
+	($s:expr, noident ignore $ident:ident) => {
+		jassg_op!($ident).ignore_then($crate::parser::core::expr::expr($s))
 	};
-	(optexpr ignore $ident:ident) => {
+	($s:expr, optexpr ignore $ident:ident) => {
 		$crate::parser::core::ident::ident()
 			.then_ignore(jassg_op!($ident))
-			.then($crate::parser::core::expr::expr().or_not())
+			.then($crate::parser::core::expr::expr($s).or_not())
 	};
-	($op:ident -> $ident:ident) => {
+	($s:expr, $op:ident -> $ident:ident) => {
 		$crate::parser::core::ident::ident()
 			.then(jop!($op))
 			.then(jassg_op!($ident))
-			.then($crate::parser::core::expr::expr())
+			.then($crate::parser::core::expr::expr($s))
 	};
-	($op:ident -> ignore $ident:ident) => {
+	($s:expr, $op:ident -> ignore $ident:ident) => {
 		$crate::parser::core::ident::ident()
 			.then_ignore(jop!($op))
 			.then_ignore(jassg_op!($ident))
-			.then($crate::parser::core::expr::expr())
+			.then($crate::parser::core::expr::expr($s))
 	};
-	($op:ident -> noident $ident:ident) => {
-		jop!($op).then(jassg_op!($ident)).then($crate::parser::core::expr::expr())
+	($s:expr, $op:ident -> noident $ident:ident) => {
+		jop!($op).then(jassg_op!($ident)).then($crate::parser::core::expr::expr($s))
 	};
-	($op:ident -> noident ignore $ident:ident) => {
-		jop!($op).then(jassg_op!($ident)).ignore_then($crate::parser::core::expr::expr())
+	($s:expr, $op:ident -> noident ignore $ident:ident) => {
+		jop!($op).then(jassg_op!($ident)).ignore_then($crate::parser::core::expr::expr($s))
 	};
 }

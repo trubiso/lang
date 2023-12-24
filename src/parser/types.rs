@@ -16,7 +16,7 @@ pub type TokenRecursive<'a, T> = Recursive<'a, Token, T, Simple<Token, Span>>;
 pub type ScopeRecursive<'a> = TokenRecursive<'a, ParserScope>;
 pub type ExprRecursive<'a> = TokenRecursive<'a, ParserExpr>;
 
-pub type ParserExpr = Expr;
+pub type ParserExpr = Expr<ParserScope>;
 pub type ParserStmt = Stmt<ParserScope>;
 
 #[derive(Debug, Clone)]

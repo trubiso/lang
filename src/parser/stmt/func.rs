@@ -65,25 +65,25 @@ fn func_generics() -> token_parser!(Vec<Ident>) {
 	angled!(ident(),).or_not().map(|x| x.unwrap_or_default())
 }
 
-fn func_body(scope: ScopeRecursive) -> token_parser!(ParserScope : '_) {
+fn func_body(s: ScopeRecursive) -> token_parser!(ParserScope : '_) {
 	choice((
 		jpunct!(FatArrow)
-			.ignore_then(expr())
+			.ignore_then(expr(s.clone()))
 			.then_ignore(jpunct!(Semicolon))
 			.map(|expr| ParserScope {
 				stmts: vec![ParserStmt::Return { value: expr }],
 			}),
-		braced!(scope),
+		braced!(s),
 	))
 }
 
-pub fn func_stmt(scope: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
+pub fn func_stmt(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
 	func_linkage()
 		.then(ty_ident_nodiscard())
 		.then(func_generics())
 		.then(func_args())
 		.then(func_attribs())
-		.then(func_body(scope).or_not())
+		.then(func_body(s).or_not())
 		.map(
 			|(((((linkage, ty_id), generics), args), attribs), body)| ParserStmt::Func {
 				id: ty_id.ident,

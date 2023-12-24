@@ -10,7 +10,7 @@ mod func;
 mod r#return;
 mod set;
 
-pub fn stmt(scope: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
+pub fn stmt(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
 	macro_rules! semi {
 		(Y $stmt:expr) => {
 			$stmt.then_ignore(jpunct!(Semicolon).repeated().at_least(1))
@@ -20,9 +20,9 @@ pub fn stmt(scope: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
 		};
 	}
 	choice((
-		semi!(Y return_stmt()),
-		semi!(Y create_stmt()),
-		semi!(Y set_stmt()),
-		semi!(N func_stmt(scope)), // TODO: declare funcs
+		semi!(Y return_stmt(s.clone())),
+		semi!(Y create_stmt(s.clone())),
+		semi!(Y set_stmt(s.clone())),
+		semi!(N func_stmt(s)),
 	))
 }

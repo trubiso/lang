@@ -19,3 +19,8 @@ i32 get(i32 _);
 D cast<D, S>(S);
 
 extern T add<T>(T, T) pure unsafe;
+
+let x = {
+	let a = 3;
+	let b = 5;
+};

@@ -7,11 +7,11 @@ pub enum Stmt<Sc: Scope> {
 	Create {
 		ty_id: TypedIdent,
 		mutable: bool,
-		value: Option<Expr>,
+		value: Option<Expr<Sc>>,
 	},
 	Set {
 		id: Ident,
-		value: Expr,
+		value: Expr<Sc>,
 	},
 	Func {
 		id: Ident,
@@ -19,6 +19,6 @@ pub enum Stmt<Sc: Scope> {
 		body: Option<Sc>,
 	},
 	Return {
-		value: Expr,
+		value: Expr<Sc>,
 	},
 }
