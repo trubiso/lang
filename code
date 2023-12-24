@@ -4,3 +4,10 @@ i27 c = 9;
 mut f64 d = 3;
 d = 4;
 d -= 5;
+
+i32 sum(i32 a, i32 b) => a + b;
+i92 sub(i92 a, i92 b) {
+	let c = a;
+	let d = b;
+	return c;
+}

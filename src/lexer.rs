@@ -89,6 +89,7 @@ macro_rules! def_token {
 
 		token_keyword!{
 			"func" => Function,
+			"return" => Return,
 			"let" => Let,
 			"mut" => Mut,
 			"_" => DontCare,
@@ -127,15 +128,15 @@ def_token!(
 		")" => RParen,
 		// "[" => LBracket,
 		// "]" => RBracket,
-		// "{" => LBrace,
-		// "}" => RBrace,
+		"{" => LBrace,
+		"}" => RBrace,
 		// "." => Dot,
 		// ".." => DotDot,
-		// "," => Comma,
+		"," => Comma,
 		// ":" => Colon,
 		// "::" => ColonColon,
 		// "->" => Arrow,
-		// "=>" => FatArrow,
+		"=>" => FatArrow,
 		";" => Semicolon,
 	}
 );
