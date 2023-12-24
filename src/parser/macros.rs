@@ -120,6 +120,11 @@ macro_rules! assg {
 	(noident ignore $ident:ident) => {
 		jassg_op!($ident).ignore_then($crate::parser::expr::expr())
 	};
+	(optexpr ignore $ident:ident) => {
+		$crate::parser::ident::ident()
+			.then_ignore(jassg_op!($ident))
+			.then($crate::parser::expr::expr().or_not())
+	};
 	($op:ident -> $ident:ident) => {
 		$crate::parser::ident::ident()
 			.then(jop!($op))

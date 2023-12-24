@@ -7,11 +7,7 @@ pub enum Stmt<Sc: Scope> {
 	Create {
 		ty_id: TypedIdent,
 		mutable: bool,
-		value: Expr,
-	},
-	Declare {
-		ty_id: TypedIdent,
-		mutable: bool,
+		value: Option<Expr>,
 	},
 	Set {
 		id: Ident,

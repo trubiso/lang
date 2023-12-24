@@ -3,7 +3,7 @@ use chumsky::prelude::*;
 
 fn let_var() -> token_parser!(ParserStmt) {
 	jkeyword!(Let)
-		.ignore_then(assg!(ignore Set))
+		.ignore_then(assg!(optexpr ignore Set))
 		.map(|(ident, expr)| ParserStmt::Create {
 			ty_id: ident.infer_type(),
 			mutable: false,
@@ -13,7 +13,7 @@ fn let_var() -> token_parser!(ParserStmt) {
 
 fn mut_var() -> token_parser!(ParserStmt) {
 	jkeyword!(Mut)
-		.ignore_then(assg!(ignore Set))
+		.ignore_then(assg!(optexpr ignore Set))
 		.map(|(id, expr)| ParserStmt::Create {
 			ty_id: id.infer_type(),
 			mutable: true,
@@ -25,7 +25,7 @@ fn ty_var() -> token_parser!(ParserStmt) {
 	jkeyword!(Mut)
 		.or_not()
 		.then(ty_ident())
-		.then(assg!(noident ignore Set))
+		.then(assg!(noident ignore Set).or_not())
 		.map(|((mutable, ty_id), expr)| ParserStmt::Create {
 			ty_id,
 			mutable: mutable.is_some(),
