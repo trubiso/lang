@@ -105,42 +105,42 @@ macro_rules! force_token {
 #[macro_export]
 macro_rules! assg {
 	($ident:ident) => {
-		$crate::parser::ident::ident()
+		$crate::parser::core::ident::ident()
 			.then(jassg_op!($ident))
-			.then($crate::parser::expr::expr())
+			.then($crate::parser::core::expr::expr())
 	};
 	(ignore $ident:ident) => {
-		$crate::parser::ident::ident()
+		$crate::parser::core::ident::ident()
 			.then_ignore(jassg_op!($ident))
-			.then($crate::parser::expr::expr())
+			.then($crate::parser::core::expr::expr())
 	};
 	(noident $ident:ident) => {
-		jassg_op!($ident).then($crate::parser::expr::expr())
+		jassg_op!($ident).then($crate::parser::core::expr::expr())
 	};
 	(noident ignore $ident:ident) => {
-		jassg_op!($ident).ignore_then($crate::parser::expr::expr())
+		jassg_op!($ident).ignore_then($crate::parser::core::expr::expr())
 	};
 	(optexpr ignore $ident:ident) => {
-		$crate::parser::ident::ident()
+		$crate::parser::core::ident::ident()
 			.then_ignore(jassg_op!($ident))
-			.then($crate::parser::expr::expr().or_not())
+			.then($crate::parser::core::expr::expr().or_not())
 	};
 	($op:ident -> $ident:ident) => {
-		$crate::parser::ident::ident()
+		$crate::parser::core::ident::ident()
 			.then(jop!($op))
 			.then(jassg_op!($ident))
-			.then($crate::parser::expr::expr())
+			.then($crate::parser::core::expr::expr())
 	};
 	($op:ident -> ignore $ident:ident) => {
-		$crate::parser::ident::ident()
+		$crate::parser::core::ident::ident()
 			.then_ignore(jop!($op))
 			.then_ignore(jassg_op!($ident))
-			.then($crate::parser::expr::expr())
+			.then($crate::parser::core::expr::expr())
 	};
 	($op:ident -> noident $ident:ident) => {
-		jop!($op).then(jassg_op!($ident)).then($crate::parser::expr::expr())
+		jop!($op).then(jassg_op!($ident)).then($crate::parser::core::expr::expr())
 	};
 	($op:ident -> noident ignore $ident:ident) => {
-		jop!($op).then(jassg_op!($ident)).ignore_then($crate::parser::expr::expr())
+		jop!($op).then(jassg_op!($ident)).ignore_then($crate::parser::core::expr::expr())
 	};
 }

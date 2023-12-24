@@ -5,10 +5,12 @@ use crate::{
 		typed_ident::TypedIdent,
 	},
 	parser::{
-		expr::expr,
-		ident::ident,
-		ty::ty,
-		ty_ident::{ty_ident, ty_ident_nodiscard},
+		core::{
+			expr::expr,
+			ident::ident,
+			ty::ty,
+			ty_ident::{ty_ident, ty_ident_nodiscard},
+		},
 		types::{ParserScope, ParserStmt, ScopeRecursive},
 	},
 };
@@ -20,7 +22,8 @@ fn func_linkage() -> token_parser!(FuncLinkage) {
 		.map(|x| x.map(|_| FuncLinkage::External).unwrap_or_default())
 }
 
-// TODO: warn about order of attribs (better to write "pure unsafe" than "unsafe pure")
+// TODO: warn about order of attribs (better to write "pure unsafe" than "unsafe
+// pure")
 fn func_attribs() -> token_parser!(FuncAttribs) {
 	macro_rules! func_attribs {
 		($($kw:ident => $prop:ident)*) => {

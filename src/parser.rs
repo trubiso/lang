@@ -1,6 +1,5 @@
 use self::{
 	stmt::stmt,
-	ty_ident::ty_ident,
 	types::{CodeStream, ParserScope},
 };
 use chumsky::{error::SimpleReason, prelude::*};
@@ -10,11 +9,8 @@ use codespan_reporting::diagnostic::{Diagnostic, Label};
 pub mod macros;
 pub mod types;
 
-pub mod expr;
-pub mod ident;
+mod core;
 mod stmt;
-pub mod ty;
-pub mod ty_ident;
 
 pub fn bare_scope() -> token_parser!(ParserScope) {
 	recursive(|scope| stmt(scope).repeated().map(|stmts| ParserScope { stmts }))

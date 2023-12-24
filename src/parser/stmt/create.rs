@@ -1,4 +1,4 @@
-use crate::parser::{ty_ident, types::ParserStmt};
+use crate::parser::{core::ty_ident::ty_ident, types::ParserStmt};
 use chumsky::prelude::*;
 
 fn let_var() -> token_parser!(ParserStmt) {

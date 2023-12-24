@@ -1,5 +1,8 @@
-use super::{types::{ExprRecursive, ParserExpr}, ident::ident};
 use crate::common::expr::Expr;
+use crate::parser::{
+	core::ident::ident,
+	types::{ExprRecursive, ParserExpr},
+};
 use chumsky::prelude::*;
 
 macro_rules! binop_parser {
@@ -36,7 +39,7 @@ fn atom(e: ExprRecursive) -> token_parser!(ParserExpr : '_) {
 		parened!(e),
 		literal_parser!(NumberLiteral),
 		// TODO: potentially_qualified_ident
-		ident().map(|x| Expr::Identifier(x))
+		ident().map(|x| Expr::Identifier(x)),
 	))
 }
 
