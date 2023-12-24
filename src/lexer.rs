@@ -1,4 +1,5 @@
 use crate::common::span::{Span, SpannedRaw};
+use chumsky::Span as _;
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use derive_more::Display;
 use logos::{Lexer, Logos};
@@ -25,6 +26,7 @@ macro_rules! token_keyword {
 		tok_venum!{Keyword {$($match => $to,)*}}
 
 		impl $crate::common::ident::Ident {
+			#[must_use]
 			pub fn is_keyword(&self, keyword: Keyword) -> bool {
 				match self.as_keyword() {
 					Some(x) => x == keyword,
@@ -32,6 +34,7 @@ macro_rules! token_keyword {
 				}
 			}
 
+			#[must_use]
 			pub fn as_keyword(&self) -> Option<Keyword> {
 				match self {
 					Self::Named(x) => {
@@ -45,6 +48,7 @@ macro_rules! token_keyword {
 		}
 
 		impl Token {
+			#[must_use]
 			pub fn is_keyword(&self, keyword: Keyword) -> bool {
 				match self.as_keyword() {
 					Some(x) => x == keyword,
@@ -52,6 +56,7 @@ macro_rules! token_keyword {
 				}
 			}
 
+			#[must_use]
 			pub fn as_keyword(&self) -> Option<Keyword> {
 				match self {
 					Token::Identifier(data) => {
@@ -159,7 +164,7 @@ pub fn lex(code: &str, file_id: usize) -> Result<Output, (Output, Vec<Diagnostic
 					.with_message("could not parse token")
 					.with_labels(vec![Label::primary(token.1.file_id, token.1.range())
 						.with_message("invalid token")]),
-			)
+			);
 		}
 	}
 	let tokens = tokens
@@ -168,9 +173,9 @@ pub fn lex(code: &str, file_id: usize) -> Result<Output, (Output, Vec<Diagnostic
 		.filter(|(token, _)| token.is_ok())
 		.map(|(token, range)| (token.unwrap(), range))
 		.collect();
-	if !diagnostics.is_empty() {
-		Err((tokens, diagnostics))
-	} else {
+	if diagnostics.is_empty() {
 		Ok(tokens)
+	} else {
+		Err((tokens, diagnostics))
 	}
 }

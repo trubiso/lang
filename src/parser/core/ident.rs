@@ -20,7 +20,7 @@ pub fn ident_nodiscard() -> token_parser!(Ident) {
 			emit(Simple::custom(
 				span,
 				"discarded ident was used where it is disallowed",
-			))
+			));
 		}
 		ident
 	})

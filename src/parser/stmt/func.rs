@@ -2,6 +2,7 @@ use crate::{
 	common::{
 		func::{FuncAttribs, FuncLinkage, FuncSignature},
 		ident::Ident,
+		r#type::Type,
 		typed_ident::TypedIdent,
 	},
 	parser::{
@@ -55,14 +56,11 @@ fn func_attribs() -> token_parser!(FuncAttribs) {
 }
 
 fn func_args() -> token_parser!(Vec<TypedIdent>) {
-	parened!(choice((
-		ty_ident(),
-		ty().map(|ty| ty.add_discarded_ident())
-	)),)
+	parened!(choice((ty_ident(), ty().map(Type::add_discarded_ident))),)
 }
 
 fn func_generics() -> token_parser!(Vec<Ident>) {
-	angled!(ident(),).or_not().map(|x| x.unwrap_or_default())
+	angled!(ident(),).or_not().map(Option::unwrap_or_default)
 }
 
 fn func_body(s: ScopeRecursive) -> token_parser!(ParserScope : '_) {
@@ -80,7 +78,7 @@ fn func_body(s: ScopeRecursive) -> token_parser!(ParserScope : '_) {
 	))
 }
 
-pub fn func_stmt(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
+pub fn stmt(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
 	func_linkage()
 		.then(ty_ident_nodiscard())
 		.then(func_generics())

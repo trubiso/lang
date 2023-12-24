@@ -54,6 +54,7 @@ impl PartialEq for Ident {
 impl Eq for Ident {}
 
 impl Ident {
+	#[must_use]
 	pub fn infer_type(&self) -> TypedIdent {
 		TypedIdent {
 			ty: Type::Inferred,
@@ -61,6 +62,7 @@ impl Ident {
 		}
 	}
 
+	#[must_use]
 	pub fn is_discarded(&self) -> bool {
 		matches!(self, Self::Discarded)
 	}

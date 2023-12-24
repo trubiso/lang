@@ -19,7 +19,7 @@ macro_rules! set_stmt {
 	};
 }
 
-pub fn set_stmt(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
+pub fn stmt(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
 	choice((
 		set_stmt!(s.clone(), Set),
 		set_stmt!(s.clone(), operator Neg),

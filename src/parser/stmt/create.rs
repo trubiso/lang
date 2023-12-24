@@ -36,6 +36,6 @@ fn ty_var(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
 		})
 }
 
-pub fn create_stmt(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
+pub fn stmt(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
 	choice((let_var(s.clone()), mut_var(s.clone()), ty_var(s)))
 }

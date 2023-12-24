@@ -12,10 +12,12 @@ pub mod types;
 mod core;
 mod stmt;
 
+#[must_use]
 pub fn bare_scope() -> token_parser!(ParserScope) {
 	recursive(|scope| stmt(scope).repeated().map(|stmts| ParserScope { stmts }))
 }
 
+#[must_use]
 pub fn parser() -> token_parser!(ParserScope) {
 	bare_scope().then_ignore(end())
 }
@@ -54,12 +56,9 @@ pub fn parse(
 					.with_notes(vec![format!(
 						"expected one of {}",
 						err.expected()
-							.map(|x| x
-								.as_ref()
-								.map(|x| format!("'{}'", x))
-								.unwrap_or("[?]".to_string()))
+							.map(|x| x.as_ref().map_or("[?]".to_string(), |x| format!("'{x}'")))
 							.reduce(|acc, b| acc + ", " + &b)
-							.unwrap_or("".into())
+							.unwrap_or(String::new())
 					)]),
 			),
 			SimpleReason::Custom(label) => add_diagnostic(

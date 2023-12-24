@@ -8,14 +8,7 @@ pub struct Span {
 }
 
 impl Span {
-	pub fn new(file_id: usize, range: std::ops::Range<usize>) -> Self {
-		Self {
-			file_id,
-			start: range.start,
-			end: range.end,
-		}
-	}
-
+	#[must_use]
 	pub fn range(&self) -> std::ops::Range<usize> {
 		self.start..self.end
 	}

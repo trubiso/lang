@@ -18,21 +18,22 @@ use crate::common::{ident::Ident, join::Join, typed_ident::TypedIdent};
 
 // TODO: we will also have tuples and structs in here at some point
 
-/// A Type is the representation of a type in code.
+/// A `Type` is the representation of a type in code.
 #[derive(Debug, Clone)]
 pub enum Type {
-	/// A Type created by the user, identified with an Ident.
+	/// A `Type` created by the user, identified with an Ident.
 	User(Ident),
-	/// A Type that comes inherently with the language.
+	/// A `Type` that comes inherently with the language.
 	BuiltIn(BuiltInType),
-	/// A Type with generics filled in, such as Vec<i32>.
+	/// A `Type` with generics filled in, such as Vec<i32>.
 	Generic(Box<Self>, Vec<Self>),
-	/// A Type not specified by the user which the inferring algorithm must turn
+	/// A `Type` not specified by the user which the inferring algorithm must turn
 	/// into a proper Type.
 	Inferred,
 }
 
 impl Type {
+	#[must_use]
 	pub fn add_discarded_ident(self) -> TypedIdent {
 		TypedIdent {
 			ty: self,
@@ -43,7 +44,7 @@ impl Type {
 
 // TODO: figure out strings and chars
 
-/// A BuiltInType is a kind of Type that comes with the language itself.
+/// A `BuiltInType` is a kind of `Type` that comes with the language itself.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BuiltInType {
 	/// A numeric type represented by i<num> or u<num>, depending on whether
@@ -60,27 +61,30 @@ pub enum BuiltInType {
 	/// can hold any numeric value.
 	Float { bits: u8 },
 	/// A type whose purpose is to denote the absence of value, represented by
-	/// "void".
+	/// `void`.
 	Void,
 }
 
 impl BuiltInType {
+	#[must_use]
 	pub fn is_valid(&self) -> bool {
 		match self {
 			Self::Integer { bits, signed: _ } => *bits < 2u32.pow(23),
 			Self::Float { bits } => *bits == 16 || *bits == 32 || *bits == 64 || *bits == 128,
-			_ => true,
+			Self::Void => true,
 		}
 	}
 
+	#[must_use]
 	pub fn width(&self) -> u32 {
 		match self {
 			Self::Integer { bits, signed: _ } => *bits,
-			Self::Float { bits } => *bits as u32,
+			Self::Float { bits } => u32::from(*bits),
 			Self::Void => 0,
 		}
 	}
 
+	#[must_use]
 	pub fn from_name(name: &str) -> Option<BuiltInType> {
 		let result = match name {
 			"void" => Some(BuiltInType::Void),
@@ -90,14 +94,14 @@ impl BuiltInType {
 			}),
 			name => match name[1..].parse() {
 				Ok(bits) => {
-					if name.starts_with("u") {
+					if name.starts_with('u') {
 						Some(BuiltInType::Integer {
 							bits,
 							signed: false,
 						})
-					} else if name.starts_with("i") {
+					} else if name.starts_with('i') {
 						Some(BuiltInType::Integer { bits, signed: true })
-					} else if name.starts_with("f") {
+					} else if name.starts_with('f') {
 						if bits > 128 {
 							None
 						} else {
@@ -110,7 +114,7 @@ impl BuiltInType {
 				Err(_) => None,
 			},
 		};
-		result.filter(|x| x.is_valid())
+		result.filter(BuiltInType::is_valid)
 	}
 }
 

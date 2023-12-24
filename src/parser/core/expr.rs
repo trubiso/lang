@@ -42,8 +42,8 @@ fn atom<'a>(
 		parened!(e),
 		literal_parser!(NumberLiteral),
 		// TODO: potentially_qualified_ident
-		ident().map(|x| Expr::Identifier(x)),
-		braced!(s).map(|x| Expr::Scope(x)),
+		ident().map(Expr::Identifier),
+		braced!(s).map(Expr::Scope),
 	))
 }
 

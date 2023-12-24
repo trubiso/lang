@@ -1,7 +1,3 @@
-use self::{
-	create::create_stmt, func::func_stmt, r#return::return_stmt,
-	set::set_stmt,
-};
 use super::types::{ParserStmt, ScopeRecursive};
 use chumsky::prelude::*;
 
@@ -20,9 +16,9 @@ pub fn stmt(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
 		};
 	}
 	choice((
-		semi!(Y return_stmt(s.clone())),
-		semi!(Y create_stmt(s.clone())),
-		semi!(Y set_stmt(s.clone())),
-		semi!(N func_stmt(s)),
+		semi!(Y r#return::stmt(s.clone())),
+		semi!(Y create::stmt(s.clone())),
+		semi!(Y set::stmt(s.clone())),
+		semi!(N func::stmt(s)),
 	))
 }

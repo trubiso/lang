@@ -9,6 +9,7 @@ pub struct TypedIdent {
 }
 
 impl TypedIdent {
+	#[must_use]
 	pub fn ident_str(&self) -> String {
 		self.ident.to_string()
 	}

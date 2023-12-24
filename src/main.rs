@@ -1,6 +1,8 @@
 // TODO: (global) write more /// and //! comments
 
-use chumsky::Stream;
+#![warn(clippy::all, clippy::pedantic)]
+
+use chumsky::{Span as _, Stream};
 use codespan_reporting::{
 	diagnostic::Severity,
 	files::SimpleFiles,
@@ -79,10 +81,10 @@ fn main() {
 		}
 		println!(
 			"{amount} diagnostic{} total ({warnings} warning{}, {} error{})",
-			if amount != 1 { "s" } else { "" },
-			if warnings != 1 { "s" } else { "" },
+			if amount == 1 { "" } else { "s" },
+			if warnings == 1 { "" } else { "s" },
 			amount - warnings,
-			if amount - warnings != 1 { "s" } else { "" },
+			if amount - warnings == 1 { "" } else { "s" },
 		);
 
 		if have_errors {

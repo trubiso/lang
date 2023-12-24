@@ -7,7 +7,7 @@ use crate::{
 };
 use chumsky::prelude::*;
 
-pub fn return_stmt(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
+pub fn stmt(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
 	jkeyword!(Return)
 		.or(jkeyword!(Yield))
 		.then(expr(s))

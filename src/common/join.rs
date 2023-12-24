@@ -8,14 +8,14 @@ pub trait Join<T: std::fmt::Display>: IntoIterator<Item = T> + Copy {
 	fn join_comma_or_empty(&self) -> String {
 		match self.join_comma() {
 			Some(x) => x,
-			None => "".into(),
+			None => String::new(),
 		}
 	}
 
 	fn join_comma_wrapped(&self, wrap_l: &str, wrap_r: &str) -> String {
 		match self.join_comma() {
 			Some(x) => wrap_l.to_string() + &x + wrap_r,
-			None => "".into(),
+			None => String::new(),
 		}
 	}
 }
