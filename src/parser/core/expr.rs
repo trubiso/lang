@@ -9,20 +9,20 @@ macro_rules! binop_parser {
 	($($op:ident)* => $next:ident) => {
 		|| $next()
 			.then(
-				span!(choice(($(jop!($op),)*)))
+				choice(($(jop!($op),)*))
 				.then($next()).repeated())
 				// FIXME: get the proper span of lhs + op + rhs
-			.foldl(|lhs, ((op, _span), rhs)| Expr::BinaryOp(Box::new(lhs), force_token!(op => Operator), Box::new(rhs)))
+			.foldl(|lhs, (op, rhs)| Expr::BinaryOp(Box::new(lhs), force_token!(op => Operator), Box::new(rhs)))
 	};
 }
 
 macro_rules! unop_parser {
 	($($op:ident)* => $next:ident$(($($x:expr),*))?) => {
-		|| span!(choice(($(jop!($op),)*))).repeated()
+		|| choice(($(jop!($op),)*)).repeated()
 			.then($next($($($x),*)?))
 			// NOTE: i don't know if this span is correct?
 			// TODO: perhaps get rhs span
-			.foldr(|(op, _span), rhs| Expr::UnaryOp(force_token!(op => Operator), Box::new(rhs)))
+			.foldr(|op, rhs| Expr::UnaryOp(force_token!(op => Operator), Box::new(rhs)))
 	};
 }
 
