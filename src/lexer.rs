@@ -90,6 +90,9 @@ macro_rules! def_token {
 		token_keyword!{
 			"func" => Function,
 			"return" => Return,
+			"extern" => Extern,
+			"pure" => Pure,
+			"unsafe" => Unsafe,
 			"let" => Let,
 			"mut" => Mut,
 			"_" => DontCare,

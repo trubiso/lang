@@ -17,3 +17,5 @@ T add<T>(T a, T b) => a + b;
 i32 get(i32 _);
 
 D cast<D, S>(S);
+
+extern T add<T>(T, T) pure unsafe;
