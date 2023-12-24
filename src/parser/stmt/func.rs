@@ -71,7 +71,10 @@ fn func_body(s: ScopeRecursive) -> token_parser!(ParserScope : '_) {
 			.ignore_then(expr(s.clone()))
 			.then_ignore(jpunct!(Semicolon))
 			.map(|expr| ParserScope {
-				stmts: vec![ParserStmt::Return { value: expr }],
+				stmts: vec![ParserStmt::Return {
+					value: expr,
+					is_yield: false,
+				}],
 			}),
 		braced!(s),
 	))

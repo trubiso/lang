@@ -90,6 +90,7 @@ macro_rules! def_token {
 		token_keyword!{
 			"func" => Function,
 			"return" => Return,
+			"yield" => Yield,
 			"extern" => Extern,
 			"pure" => Pure,
 			"unsafe" => Unsafe,

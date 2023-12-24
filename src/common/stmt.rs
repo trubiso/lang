@@ -20,5 +20,6 @@ pub enum Stmt<Sc: Scope> {
 	},
 	Return {
 		value: Expr<Sc>,
+		is_yield: bool,
 	},
 }
