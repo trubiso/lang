@@ -27,8 +27,8 @@ pub enum Type {
 	BuiltIn(BuiltInType),
 	/// A `Type` with generics filled in, such as Vec<i32>.
 	Generic(Box<Self>, Vec<Self>),
-	/// A `Type` not specified by the user which the inferring algorithm must turn
-	/// into a proper Type.
+	/// A `Type` not specified by the user which the inferring algorithm must
+	/// turn into a proper Type.
 	Inferred,
 }
 
@@ -43,7 +43,6 @@ impl Type {
 }
 
 // TODO: figure out strings and chars
-// TODO: isize, usize
 
 /// A `BuiltInType` is a kind of `Type` that comes with the language itself.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -53,8 +52,11 @@ pub enum BuiltInType {
 	/// integer, which can range from 1 to 2^23. The type itself can hold any
 	/// non-decimal numeric value, unless it's unsigned, limiting its range to
 	/// only positive integers and zero.
+	///
+	/// If the `bits` field is `None`, this means the width of the integer is
+	/// the same as the pointer width for the target architecture.
 	Integer {
-		bits: u32, // < 2^23
+		bits: Option<u32>, // < 2^23
 		signed: bool,
 	},
 	/// A numeric type represented by f<num>, where the number represents the
@@ -70,18 +72,20 @@ impl BuiltInType {
 	#[must_use]
 	pub fn is_valid(&self) -> bool {
 		match self {
-			Self::Integer { bits, signed: _ } => *bits < 2u32.pow(23),
+			Self::Integer { bits, signed: _ } => {
+				bits.map(|x| x < 2u32.pow(23) && x > 0).unwrap_or(true)
+			}
 			Self::Float { bits } => *bits == 16 || *bits == 32 || *bits == 64 || *bits == 128,
 			Self::Void => true,
 		}
 	}
 
 	#[must_use]
-	pub fn width(&self) -> u32 {
+	pub fn width(&self) -> Option<u32> {
 		match self {
 			Self::Integer { bits, signed: _ } => *bits,
-			Self::Float { bits } => u32::from(*bits),
-			Self::Void => 0,
+			Self::Float { bits } => Some(u32::from(*bits)),
+			Self::Void => Some(0),
 		}
 	}
 
@@ -90,18 +94,21 @@ impl BuiltInType {
 		let result = match name {
 			"void" => Some(BuiltInType::Void),
 			"bool" => Some(BuiltInType::Integer {
-				bits: 1,
+				bits: Some(1),
 				signed: false,
 			}),
-			name => match name[1..].parse() {
+			name => match name[1..].parse::<u32>() {
 				Ok(bits) => {
 					if name.starts_with('u') {
 						Some(BuiltInType::Integer {
-							bits,
+							bits: Some(bits),
 							signed: false,
 						})
 					} else if name.starts_with('i') {
-						Some(BuiltInType::Integer { bits, signed: true })
+						Some(BuiltInType::Integer {
+							bits: Some(bits),
+							signed: true,
+						})
 					} else if name.starts_with('f') {
 						if bits > 128 {
 							None
@@ -112,7 +119,25 @@ impl BuiltInType {
 						None
 					}
 				}
-				Err(_) => None,
+				Err(_) => {
+					if name[1..] == *"size" {
+						if name.starts_with('u') {
+							Some(BuiltInType::Integer {
+								bits: None,
+								signed: false,
+							})
+						} else if name.starts_with('i') {
+							Some(BuiltInType::Integer {
+								bits: None,
+								signed: true,
+							})
+						} else {
+							unreachable!()
+						}
+					} else {
+						None
+					}
+				}
 			},
 		};
 		result.filter(BuiltInType::is_valid)
@@ -135,9 +160,11 @@ impl std::fmt::Display for Type {
 impl std::fmt::Display for BuiltInType {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
-			Self::Integer { bits, signed } => {
-				f.write_fmt(format_args!("{}{bits}", if *signed { "i" } else { "u" }))
-			}
+			Self::Integer { bits, signed } => f.write_fmt(format_args!(
+				"{}{}",
+				if *signed { "i" } else { "u" },
+				bits.map(|x| x.to_string()).unwrap_or("size".to_string())
+			)),
 			Self::Float { bits } => f.write_fmt(format_args!("f{bits}")),
 			Self::Void => f.write_str("void"),
 		}

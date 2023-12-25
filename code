@@ -36,3 +36,5 @@ let q = 9i27;
 let g = 93.2f32;
 let h = 0xfaffap32;
 let f = 39f;
+
+isize k = 3;
