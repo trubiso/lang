@@ -56,7 +56,7 @@ pub enum BuiltInType {
 	/// If the `bits` field is `None`, this means the width of the integer is
 	/// the same as the pointer width for the target architecture.
 	Integer {
-		bits: Option<u32>, // < 2^23
+		bits: Option<u32>,
 		signed: bool,
 	},
 	/// A numeric type represented by f<num>, where the number represents the
