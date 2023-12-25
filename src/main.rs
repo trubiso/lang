@@ -15,6 +15,20 @@ use common::span::Span;
 use parser::types::CodeStream;
 use std::fs;
 
+// Compilation steps:
+// X - Lexing (into Token)
+// X - Parsing (into AST)
+//   - CHR
+//   - some intermediate step (maybe even done in CHR) where the files being
+//     compiled are merged to resolve imports and etc
+//   - Type inference
+//   - another checking pass that checks, now that we know types, whether
+//     mutability is being violated
+//   - ??? (perhaps passes to detect ptr dereference outside of unsafe and stuff
+//     like that, ensuring code is safe)
+//   - Codegen (generate LLVM IR)
+//   - Compile (compile LLVM IR down to an actual .o file or executable file)
+
 pub mod common;
 pub mod lexer;
 pub mod parser;
