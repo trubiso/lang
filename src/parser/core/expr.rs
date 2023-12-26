@@ -63,6 +63,42 @@ fn call<'a>(
 		})
 }
 
+/// Parses:
+/// - addition/subtraction (`<expr> +|- <expr>`)
+/// - multiplication/division (`<expr> *|/ <expr>`)
+/// - negation (`-<expr>`)
+/// - function calls (`<expr><<ty>, ...>(<expr>, ...)`)
+///
+/// Want (basic):
+/// - logical operators (`<expr> ||, && <expr>`)
+/// - ord/eq operators (`<expr> ==, !=, <, >, <=, >= <expr>`)
+/// - ref (`&<expr>`)
+/// - deref (`*<expr>`)
+/// - dot (`<expr>.<ident>`)
+/// - construct (`<ty> { <ident>: <expr>, <ident>: <expr> }`)
+///
+/// Want (sugar):
+/// - deref dot (`<expr>*.<ident>` (`== (*<expr>.<ident>)`))
+/// - curry (`<expr>-><ident>()` (`== <ident>(<expr>)`), `<expr1>-><ident>(<expr2>,
+///   ...)` (`== <ident>(<expr1>, <expr2>, ...)`))
+///
+/// Want (thinking about it):
+/// - array literals? (`[<expr>, ...]`)
+/// - tuples? (`(<expr>, ...)`)
+/// - set? (`<ident> = <expr>`, same as doing this outside expr, returning the
+///   rhs)
+/// - ub producers? (`<ident>++, ++<ident>, <ident>--, --<ident>`, try not to ub :D)
+/// - ignore lhs? (`<expr1>, <expr2>, <expr3>` (`== <expr3>`); but do it with
+///   another symbol)
+/// - bitwise ops? (`~<expr>`, `<expr> ^ <expr>`, ...; maybe should do with
+///   functions)
+///
+/// Want (more scope-y things):
+/// - match/switch
+/// - if (`if (<expr>) <expr> [else <expr>]`, wouldn't even need to make it a
+///   statement, but it would be cool to also allow for `if <expr> { ... } else
+///   <expr>`)
+/// - for? while? how would these return, being loops
 pub fn expr(s: ScopeRecursive) -> token_parser!(ParserExpr : '_) {
 	recursive(|e| {
 		let neg_parser = unop_parser!(Neg => call(e.clone(), s.clone()));
