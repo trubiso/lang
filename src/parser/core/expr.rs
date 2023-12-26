@@ -63,6 +63,12 @@ fn call<'a>(
 		})
 }
 
+/// Atoms:
+/// - `(<expr>)`
+/// - `<number literal>`
+/// - `<ident>` (TODO: should be potentially qualified)
+/// - `<scope>` (ideally with `yield` stmt)
+/// 
 /// Parses:
 /// - addition/subtraction (`<expr> +|- <expr>`)
 /// - multiplication/division (`<expr> *|/ <expr>`)
