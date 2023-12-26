@@ -68,7 +68,7 @@ fn call<'a>(
 /// - `<number literal>`
 /// - `<ident>` (TODO: should be potentially qualified)
 /// - `<scope>` (ideally with `yield` stmt)
-/// 
+///
 /// Parses:
 /// - addition/subtraction (`<expr> +|- <expr>`)
 /// - multiplication/division (`<expr> *|/ <expr>`)
@@ -85,15 +85,16 @@ fn call<'a>(
 ///
 /// Want (sugar):
 /// - deref dot (`<expr>*.<ident>` (`== (*<expr>.<ident>)`))
-/// - curry (`<expr>-><ident>()` (`== <ident>(<expr>)`), `<expr1>-><ident>(<expr2>,
-///   ...)` (`== <ident>(<expr1>, <expr2>, ...)`))
+/// - curry (`<expr>-><ident>()` (`== <ident>(<expr>)`),
+///   `<expr1>-><ident>(<expr2>, ...)` (`== <ident>(<expr1>, <expr2>, ...)`))
 ///
 /// Want (thinking about it):
 /// - array literals? (`[<expr>, ...]`)
 /// - tuples? (`(<expr>, ...)`)
 /// - set? (`<ident> = <expr>`, same as doing this outside expr, returning the
 ///   rhs)
-/// - ub producers? (`<ident>++, ++<ident>, <ident>--, --<ident>`, try not to ub :D)
+/// - ub producers? (`<ident>++, ++<ident>, <ident>--, --<ident>`, try not to ub
+///   :D)
 /// - ignore lhs? (`<expr1>, <expr2>, <expr3>` (`== <expr3>`); but do it with
 ///   another symbol)
 /// - bitwise ops? (`~<expr>`, `<expr> ^ <expr>`, ...; maybe should do with
