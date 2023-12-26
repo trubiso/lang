@@ -1,3 +1,4 @@
+use super::ty::ty;
 use crate::common::expr::Expr;
 use crate::common::span::Span;
 use crate::lexer::Token;
@@ -34,6 +35,8 @@ macro_rules! literal_parser {
 	};
 }
 
+// NOTE: can't make a type to encapsulate the return below here, because the
+// feature "type alias impl trait" SEGFAULTS!!! ahh, rust's so safe...
 fn atom<'a>(
 	e: ExprRecursive<'a>,
 	s: ScopeRecursive<'a>,
@@ -47,9 +50,22 @@ fn atom<'a>(
 	))
 }
 
+fn call<'a>(
+	e: ExprRecursive<'a>,
+	s: ScopeRecursive<'a>,
+) -> impl Parser<Token, ParserExpr, Error = Simple<Token, Span>> + 'a {
+	atom(e.clone(), s)
+		.then(angled!(ty(),).or_not().then(parened!(e,)).repeated())
+		.foldl(|lhs, (generics, args)| Expr::Call {
+			callee: Box::new(lhs),
+			generics,
+			args,
+		})
+}
+
 pub fn expr(s: ScopeRecursive) -> token_parser!(ParserExpr : '_) {
 	recursive(|e| {
-		let neg_parser = unop_parser!(Neg => atom(e.clone(), s.clone()));
+		let neg_parser = unop_parser!(Neg => call(e.clone(), s.clone()));
 		let sd_parser = binop_parser!(Star Div => neg_parser);
 		let pn_parser = binop_parser!(Plus Neg => sd_parser);
 		pn_parser()

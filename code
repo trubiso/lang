@@ -38,3 +38,5 @@ let h = 0xfaffap32;
 let f = 39f;
 
 isize k = 3;
+
+let josh = add(3, 4)(5, 6)<i32>(7, 8);
