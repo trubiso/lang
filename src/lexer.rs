@@ -41,7 +41,6 @@ macro_rules! token_keyword {
 						$(if x == $match { return Some(Keyword::$to); })*
 						return None;
 					}
-					#[allow(unreachable_patterns)] // TODO: add more types of Ident and phase this out
 					_ => return None,
 				}
 			}
