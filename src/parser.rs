@@ -71,9 +71,7 @@ pub fn parse(
 		}
 	}
 	Err((
-		parsed
-			.map(|x| x.value)
-			.unwrap_or_else(|| ParserScope { stmts: Vec::new() }),
+		parsed.map_or_else(|| ParserScope { stmts: Vec::new() }, |x| x.value),
 		diagnostics,
 	))
 }

@@ -1,9 +1,12 @@
 use crate::common::{r#type::Type, typed_ident::TypedIdent};
 
-use super::span::{Spanned, AddSpan};
+use super::span::{AddSpan, Spanned};
+
+// FIXME: PartialEq/Eq will break when you have two ways to call something, eg
+// "::types::Type" vs directly importing "Type"
 
 /// An Ident is a name given to a variable, a function or a type.
-#[derive(Debug, Hash, Clone)]
+#[derive(Debug, Hash, Clone, PartialEq, Eq)]
 pub enum Ident {
 	/// A named Ident is the most basic form of an Ident: it gives a name to an
 	/// object in code.
@@ -31,30 +34,6 @@ impl std::fmt::Display for Ident {
 	}
 }
 
-impl PartialEq for Ident {
-	fn eq(&self, other: &Self) -> bool {
-		match self {
-			Self::Named(x) => {
-				if let Self::Named(y) = other {
-					x == y
-				} else {
-					false
-				}
-			}
-			Self::Qualified(x) => {
-				if let Self::Qualified(y) = other {
-					x == y
-				} else {
-					false
-				}
-			}
-			Self::Discarded => matches!(other, Self::Discarded),
-		}
-	}
-}
-
-impl Eq for Ident {}
-
 impl Ident {
 	#[must_use]
 	pub fn is_discarded(&self) -> bool {
@@ -69,6 +48,7 @@ impl Spanned<Ident> {
 		TypedIdent {
 			ty: Type::Inferred.add_span(span.clone()),
 			ident: self,
-		}.add_span(span)
+		}
+		.add_span(span)
 	}
 }

@@ -39,17 +39,17 @@ fn begins_with_uppercase(str: &str) -> bool {
 	str.chars().next().unwrap().is_uppercase()
 }
 
-pub fn check_case(span: &Span, name: String, wanted: Case) {
+pub fn check_case(span: &Span, name: &str, wanted: &Case) {
 	let found = match wanted {
 		Case::PascalCase => {
 			if name.contains('_') {
-				if is_uppercase(&name) {
+				if is_uppercase(name) {
 					Case::UpperSnakeCase
 				} else {
 					Case::SnakeCase
 				}
-			} else if !begins_with_uppercase(&name) {
-				if has_uppercase(&name) {
+			} else if !begins_with_uppercase(name) {
+				if has_uppercase(name) {
 					Case::CamelCase
 				} else {
 					Case::SnakeCamel
@@ -59,12 +59,12 @@ pub fn check_case(span: &Span, name: String, wanted: Case) {
 			}
 		}
 		Case::SnakeCase => {
-			if has_uppercase(&name) {
-				if name.contains('_') && !is_uppercase(&name) {
+			if has_uppercase(name) {
+				if name.contains('_') && !is_uppercase(name) {
 					Case::SnakeCase
 				} else if name.contains('_') {
 					Case::UpperSnakeCase
-				} else if begins_with_uppercase(&name) {
+				} else if begins_with_uppercase(name) {
 					Case::PascalCase
 				} else {
 					Case::CamelCase
@@ -74,28 +74,26 @@ pub fn check_case(span: &Span, name: String, wanted: Case) {
 			}
 		}
 		Case::UpperSnakeCase => {
-			if !is_uppercase(&name) {
-				if name.contains('_') {
-					Case::SnakeCase
-				} else {
-					Case::PascalCase
-				}
-			} else {
+			if is_uppercase(name) {
 				Case::UpperSnakeCase
+			} else if name.contains('_') {
+				Case::SnakeCase
+			} else {
+				Case::PascalCase
 			}
 		}
 		_ => panic!("why"),
 	};
-	if found != wanted {
+	if found != *wanted {
 		add_diagnostic(
 			Diagnostic::warning()
 				.with_message("wrong case system used")
 				.with_labels(vec![Label::primary(span.file_id, span.range())
 					.with_message(format!("expected {wanted}, found {found}",))]),
-		)
+		);
 	}
 }
 
-pub fn check_case_ident(ident: &Spanned<Ident>, wanted: Case) {
-	check_case(&ident.span, ident.value.to_string(), wanted)
+pub fn check_case_ident(ident: &Spanned<Ident>, wanted: &Case) {
+	check_case(&ident.span, &ident.value.to_string(), wanted);
 }

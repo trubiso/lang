@@ -1,5 +1,4 @@
 use super::types::{ParserStmt, ScopeRecursive};
-use crate::common::span::AddSpan;
 use chumsky::prelude::*;
 
 mod create;
@@ -16,11 +15,10 @@ pub fn stmt(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
 			$stmt.then_ignore(jpunct!(Semicolon).repeated())
 		};
 	}
-	choice((
+	span!(choice((
 		semi!(Y r#return::stmt(s.clone())),
 		semi!(Y create::stmt(s.clone())),
 		semi!(Y set::stmt(s.clone())),
 		semi!(N func::stmt(s)),
-	))
-	.map_with_span(|stmt, span| stmt.add_span(span))
+	)))
 }

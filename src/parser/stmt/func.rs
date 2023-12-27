@@ -82,7 +82,7 @@ fn func_body(s: ScopeRecursive) -> token_parser!(ParserScope : '_) {
 				}
 				.add_span(span)
 			}),
-		braced!(s).map_with_span(|scope, span| scope.add_span(span)),
+		span!(braced!(s)),
 	))
 }
 

@@ -82,7 +82,7 @@ impl<T: Hoist> Hoist for Option<T> {
 	type Output = Option<T::Output>;
 
 	fn hoist(&self) -> Self::Output {
-		self.as_ref().map(|x| x.hoist())
+		self.as_ref().map(Hoist::hoist)
 	}
 }
 
@@ -90,7 +90,7 @@ impl<T: Hoist> Hoist for Vec<T> {
 	type Output = Vec<T::Output>;
 
 	fn hoist(&self) -> Self::Output {
-		self.iter().map(|x| x.hoist()).collect()
+		self.iter().map(Hoist::hoist).collect()
 	}
 }
 
@@ -177,6 +177,7 @@ impl Hoist for ParserScope {
 	}
 }
 
+#[must_use]
 pub fn hoist(scope: &ParserScope) -> HoistedScope {
 	scope.hoist()
 }
