@@ -1,5 +1,5 @@
 use super::types::{ParserStmt, ScopeRecursive};
-use crate::common::span::{AddSpan, Spanned};
+use crate::common::span::AddSpan;
 use chumsky::prelude::*;
 
 mod create;
@@ -7,7 +7,7 @@ mod func;
 mod r#return;
 mod set;
 
-pub fn stmt(s: ScopeRecursive) -> token_parser!(Spanned<ParserStmt> : '_) {
+pub fn stmt(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
 	macro_rules! semi {
 		(Y $stmt:expr) => {
 			$stmt.then_ignore(jpunct!(Semicolon).repeated().at_least(1))

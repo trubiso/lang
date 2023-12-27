@@ -1,5 +1,7 @@
 use crate::common::{r#type::Type, typed_ident::TypedIdent};
 
+use super::span::{Spanned, AddSpan};
+
 /// An Ident is a name given to a variable, a function or a type.
 #[derive(Debug, Clone)]
 pub enum Ident {
@@ -55,15 +57,18 @@ impl Eq for Ident {}
 
 impl Ident {
 	#[must_use]
-	pub fn infer_type(&self) -> TypedIdent {
-		TypedIdent {
-			ty: Type::Inferred,
-			ident: self.clone(),
-		}
-	}
-
-	#[must_use]
 	pub fn is_discarded(&self) -> bool {
 		matches!(self, Self::Discarded)
+	}
+}
+
+impl Spanned<Ident> {
+	#[must_use]
+	pub fn infer_type(self) -> Spanned<TypedIdent> {
+		let span = self.span.clone();
+		TypedIdent {
+			ty: Type::Inferred.add_span(span.clone()),
+			ident: self,
+		}.add_span(span)
 	}
 }

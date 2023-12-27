@@ -1,3 +1,4 @@
+use super::span::{AddSpan, Spanned};
 use crate::common::{ident::Ident, join::Join, typed_ident::TypedIdent};
 
 // TODO: figure out Refs and Ptrs, eg:
@@ -32,12 +33,13 @@ pub enum Type {
 	Inferred,
 }
 
-impl Type {
+impl Spanned<Type> {
 	#[must_use]
 	pub fn add_discarded_ident(self) -> TypedIdent {
+		let span = self.span.clone();
 		TypedIdent {
 			ty: self,
-			ident: Ident::Discarded,
+			ident: Ident::Discarded.add_span(span),
 		}
 	}
 }
@@ -55,10 +57,7 @@ pub enum BuiltInType {
 	///
 	/// If the `bits` field is `None`, this means the width of the integer is
 	/// the same as the pointer width for the target architecture.
-	Integer {
-		bits: Option<u32>,
-		signed: bool,
-	},
+	Integer { bits: Option<u32>, signed: bool },
 	/// A numeric type represented by f<num>, where the number represents the
 	/// width of the float, which may only be 16, 32, 64 or 128 bits. The type
 	/// can hold any numeric value.

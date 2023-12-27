@@ -1,6 +1,5 @@
+use super::{scope::Scope, span::Spanned};
 use crate::common::{ident::Ident, r#type::Type, typed_ident::TypedIdent};
-
-use super::scope::Scope;
 
 #[derive(Debug, Default, Clone)]
 pub struct FuncAttribs {
@@ -17,11 +16,11 @@ pub enum FuncLinkage {
 
 #[derive(Debug, Clone)]
 pub struct FuncSignature {
-	pub attribs: FuncAttribs,
-	pub linkage: FuncLinkage,
-	pub return_ty: Type,
-	pub args: Vec<TypedIdent>,
-	pub generics: Vec<Ident>,
+	pub attribs: Spanned<FuncAttribs>,
+	pub linkage: Spanned<FuncLinkage>,
+	pub return_ty: Spanned<Type>,
+	pub args: Spanned<Vec<Spanned<TypedIdent>>>,
+	pub generics: Spanned<Vec<Spanned<Ident>>>,
 }
 
 pub struct Func<Sc: Scope> {

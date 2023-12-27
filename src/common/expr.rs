@@ -1,4 +1,4 @@
-use super::{scope::Scope, r#type::Type};
+use super::{scope::Scope, r#type::Type, span::Spanned};
 use crate::{common::ident::Ident, lexer::Operator};
 
 // TODO: dot access (a.b), deref, ref, construct (Struct {a: 3, b: 5}), array literal?, tuple??
@@ -6,8 +6,8 @@ use crate::{common::ident::Ident, lexer::Operator};
 pub enum Expr<Sc: Scope> {
 	NumberLiteral(String),
 	Identifier(Ident),
-	BinaryOp(Box<Expr<Sc>>, Operator, Box<Expr<Sc>>),
-	UnaryOp(Operator, Box<Expr<Sc>>),
+	BinaryOp(Box<Spanned<Expr<Sc>>>, Spanned<Operator>, Box<Spanned<Expr<Sc>>>),
+	UnaryOp(Spanned<Operator>, Box<Spanned<Expr<Sc>>>),
 	Scope(Sc),
-	Call { callee: Box<Expr<Sc>>, generics: Option<Vec<Type>>, args: Vec<Expr<Sc>> }
+	Call { callee: Box<Spanned<Expr<Sc>>>, generics: Option<Vec<Spanned<Type>>>, args: Vec<Spanned<Expr<Sc>>> }
 }

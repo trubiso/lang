@@ -78,12 +78,24 @@ pub type SpannedRaw<T> = (T, Span);
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Spanned<T> {
 	pub span: Span,
-	pub value: T
+	pub value: T,
+}
+
+impl<T> Spanned<T> {
+	pub fn map<U>(self, func: impl FnOnce(T) -> U) -> Spanned<U> {
+		func(self.value).add_span(self.span)
+	}
 }
 
 impl<T> IntoSpan for Spanned<T> {
 	fn span(&self) -> Span {
 		self.span.clone()
+	}
+}
+
+impl<T: std::fmt::Display> std::fmt::Display for Spanned<T> {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		f.write_fmt(format_args!("{}", self.value))
 	}
 }
 
@@ -95,10 +107,7 @@ impl<T> IntoSpan for SpannedRaw<T> {
 
 pub trait AddSpan<T>: Sized {
 	fn add_span(self, span: Span) -> Spanned<Self> {
-		Spanned {
-			value: self,
-			span
-		}
+		Spanned { value: self, span }
 	}
 }
 

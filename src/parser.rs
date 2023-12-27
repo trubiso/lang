@@ -14,7 +14,9 @@ mod stmt;
 
 #[must_use]
 pub fn bare_scope() -> token_parser!(ParserScope) {
-	recursive(|scope| stmt(scope).repeated().map(|stmts| ParserScope { stmts }))
+	span!(recursive(|scope| stmt(scope)
+		.repeated()
+		.map(|stmts| ParserScope { stmts })))
 }
 
 #[must_use]
@@ -28,7 +30,7 @@ pub fn parse(
 	let (parsed, errors) = parser().parse_recovery(code_stream);
 	let mut diagnostics = vec![];
 	if errors.is_empty() {
-		return Ok(parsed.expect("what"));
+		return Ok(parsed.expect("what").value);
 	}
 	// try not to duplicate diagnostics challenge
 	let mut add_diagnostic = |diagnostic: Diagnostic<_>| {
@@ -69,7 +71,9 @@ pub fn parse(
 		}
 	}
 	Err((
-		parsed.unwrap_or_else(|| ParserScope { stmts: Vec::new() }),
+		parsed
+			.map(|x| x.value)
+			.unwrap_or_else(|| ParserScope { stmts: Vec::new() }),
 		diagnostics,
 	))
 }

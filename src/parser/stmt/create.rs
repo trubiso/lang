@@ -4,7 +4,7 @@ use crate::parser::{
 };
 use chumsky::prelude::*;
 
-fn let_var(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
+fn let_var(s: ScopeRecursive) -> token_parser_no_span!(ParserStmt : '_) {
 	jkeyword!(Let)
 		.ignore_then(assg!(s, optexpr ignore Set))
 		.map(|(ident, expr)| ParserStmt::Create {
@@ -14,7 +14,7 @@ fn let_var(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
 		})
 }
 
-fn mut_var(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
+fn mut_var(s: ScopeRecursive) -> token_parser_no_span!(ParserStmt : '_) {
 	jkeyword!(Mut)
 		.ignore_then(assg!(s, optexpr ignore Set))
 		.map(|(id, expr)| ParserStmt::Create {
@@ -24,7 +24,7 @@ fn mut_var(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
 		})
 }
 
-fn ty_var(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
+fn ty_var(s: ScopeRecursive) -> token_parser_no_span!(ParserStmt : '_) {
 	jkeyword!(Mut)
 		.or_not()
 		.then(ty_ident())
@@ -36,6 +36,6 @@ fn ty_var(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
 		})
 }
 
-pub fn stmt(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
+pub fn stmt(s: ScopeRecursive) -> token_parser_no_span!(ParserStmt : '_) {
 	choice((let_var(s.clone()), mut_var(s.clone()), ty_var(s)))
 }

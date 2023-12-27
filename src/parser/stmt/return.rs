@@ -7,7 +7,7 @@ use crate::{
 };
 use chumsky::prelude::*;
 
-pub fn stmt(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
+pub fn stmt(s: ScopeRecursive) -> token_parser_no_span!(ParserStmt : '_) {
 	jkeyword!(Return)
 		.or(jkeyword!(Yield))
 		.then(expr(s))

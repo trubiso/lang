@@ -3,7 +3,8 @@ use crate::{
 		func::{FuncAttribs, FuncLinkage, FuncSignature},
 		ident::Ident,
 		r#type::Type,
-		typed_ident::TypedIdent, span::AddSpan,
+		span::{AddSpan, Spanned},
+		typed_ident::TypedIdent,
 	},
 	parser::{
 		core::{
@@ -18,9 +19,9 @@ use crate::{
 use chumsky::prelude::*;
 
 fn func_linkage() -> token_parser!(FuncLinkage) {
-	jkeyword!(Extern)
+	span!(jkeyword!(Extern)
 		.or_not()
-		.map(|x| x.map(|_| FuncLinkage::External).unwrap_or_default())
+		.map(|x| x.map(|_| FuncLinkage::External).unwrap_or_default()))
 }
 
 // TODO: warn about order of attribs (better to write "pure unsafe" than "unsafe
@@ -28,7 +29,7 @@ fn func_linkage() -> token_parser!(FuncLinkage) {
 fn func_attribs() -> token_parser!(FuncAttribs) {
 	macro_rules! func_attribs {
 		($($kw:ident => $prop:ident)*) => {
-			choice(($(jkeyword!($kw),)*))
+			span!(choice(($(jkeyword!($kw),)*))
 			.repeated()
 			.validate(|attribs, span: $crate::common::span::Span, emit| {
 				let mut final_attribs = FuncAttribs::default();
@@ -46,7 +47,7 @@ fn func_attribs() -> token_parser!(FuncAttribs) {
 					}
 				}
 				final_attribs
-			})
+			}))
 		};
 	}
 	func_attribs!(
@@ -55,12 +56,15 @@ fn func_attribs() -> token_parser!(FuncAttribs) {
 	)
 }
 
-fn func_args() -> token_parser!(Vec<TypedIdent>) {
-	parened!(choice((ty_ident(), ty().map(Type::add_discarded_ident))),)
+fn func_args() -> token_parser!(Vec<Spanned<TypedIdent>>) {
+	span!(parened!(choice((
+		ty_ident(),
+		span!(ty().map(Spanned::<Type>::add_discarded_ident))
+	)),))
 }
 
-fn func_generics() -> token_parser!(Vec<Ident>) {
-	angled!(ident(),).or_not().map(Option::unwrap_or_default)
+fn func_generics() -> token_parser!(Vec<Spanned<Ident>>) {
+	span!(angled!(ident(),).or_not().map(Option::unwrap_or_default))
 }
 
 fn func_body(s: ScopeRecursive) -> token_parser!(ParserScope : '_) {
@@ -68,17 +72,21 @@ fn func_body(s: ScopeRecursive) -> token_parser!(ParserScope : '_) {
 		jpunct!(FatArrow)
 			.ignore_then(expr(s.clone()))
 			.then_ignore(jpunct!(Semicolon))
-			.map_with_span(|expr, span| ParserScope {
-				stmts: vec![ParserStmt::Return {
-					value: expr,
-					is_yield: false,
-				}.add_span(span)],
+			.map_with_span(|expr, span| {
+				ParserScope {
+					stmts: vec![ParserStmt::Return {
+						value: expr,
+						is_yield: false,
+					}
+					.add_span(span.clone())],
+				}
+				.add_span(span)
 			}),
-		braced!(s),
+		braced!(s).map_with_span(|scope, span| scope.add_span(span)),
 	))
 }
 
-pub fn stmt(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
+pub fn stmt(s: ScopeRecursive) -> token_parser_no_span!(ParserStmt : '_) {
 	func_linkage()
 		.then(ty_ident_nodiscard())
 		.then(func_generics())
@@ -87,11 +95,11 @@ pub fn stmt(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
 		.then(func_body(s).or_not())
 		.map(
 			|(((((linkage, ty_id), generics), args), attribs), body)| ParserStmt::Func {
-				id: ty_id.ident,
+				id: ty_id.value.ident,
 				signature: FuncSignature {
 					attribs,
 					linkage,
-					return_ty: ty_id.ty,
+					return_ty: ty_id.value.ty,
 					args,
 					generics,
 				},

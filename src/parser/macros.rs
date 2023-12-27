@@ -1,11 +1,22 @@
 #[macro_export]
-macro_rules! token_parser {
+macro_rules! token_parser_no_span {
 	($ty:ty) => {
 		impl chumsky::Parser<$crate::lexer::Token, $ty, Error = chumsky::error::Simple<$crate::lexer::Token, $crate::common::span::Span>>
 	};
 
 	($ty:ty : '_) => {
 		impl chumsky::Parser<$crate::lexer::Token, $ty, Error = chumsky::error::Simple<$crate::lexer::Token, $crate::common::span::Span>> + '_
+	};
+}
+
+#[macro_export]
+macro_rules! token_parser {
+	($ty:ty) => {
+		token_parser_no_span!($crate::common::span::Spanned<$ty>)
+	};
+
+	($ty:ty : '_) => {
+		token_parser_no_span!($crate::common::span::Spanned<$ty> : '_)
 	};
 }
 
@@ -19,7 +30,7 @@ macro_rules! ident {
 #[macro_export]
 macro_rules! span {
 	($x:expr) => {
-		$x.map_with_span(|x, s| (x, s))
+		$x.map_with_span(|x, s| $crate::common::span::AddSpan::add_span(x, s))
 	};
 }
 
@@ -138,9 +149,13 @@ macro_rules! assg {
 			.then($crate::parser::core::expr::expr($s))
 	};
 	($s:expr, $op:ident -> noident $ident:ident) => {
-		jop!($op).then(jassg_op!($ident)).then($crate::parser::core::expr::expr($s))
+		jop!($op)
+			.then(jassg_op!($ident))
+			.then($crate::parser::core::expr::expr($s))
 	};
 	($s:expr, $op:ident -> noident ignore $ident:ident) => {
-		jop!($op).then(jassg_op!($ident)).ignore_then($crate::parser::core::expr::expr($s))
+		jop!($op)
+			.then(jassg_op!($ident))
+			.ignore_then($crate::parser::core::expr::expr($s))
 	};
 }

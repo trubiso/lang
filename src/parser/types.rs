@@ -14,7 +14,7 @@ pub type CodeStream<'a> = Stream<'a, Token, Span, IntoIter<SpannedRaw<Token>>>;
 
 pub type TokenRecursive<'a, T> = Recursive<'a, Token, T, Simple<Token, Span>>;
 pub type ScopeRecursive<'a> = TokenRecursive<'a, ParserScope>;
-pub type ExprRecursive<'a> = TokenRecursive<'a, ParserExpr>;
+pub type ExprRecursive<'a> = TokenRecursive<'a, Spanned<ParserExpr>>;
 
 pub type ParserExpr = Expr<ParserScope>;
 pub type ParserStmt = Stmt<ParserScope>;

@@ -1,4 +1,10 @@
-use crate::parser::types::{ParserExpr, ParserStmt, ScopeRecursive};
+use crate::{
+	common::span::AddSpan,
+	parser::{
+		core::{expr::expr, ident::ident},
+		types::{ParserExpr, ParserStmt, ScopeRecursive},
+	},
+};
 use chumsky::prelude::*;
 
 macro_rules! set_stmt {
@@ -6,20 +12,26 @@ macro_rules! set_stmt {
 		assg!($s, $ident).map(|((lhs, _), rhs)| ParserStmt::Set {id: lhs, value: rhs})
 	};
 	($s:expr, operator $op:ident) => {
-		assg!($s, $op -> Set).map(|(((lhs, op), _), rhs)| {
+		ident()
+		.then(span!(jop!($op)))
+		.then(jassg_op!(Set))
+		.then(expr($s))
+		.map(|(((lhs, op), _), rhs)| {
+			let lhs_span = lhs.span.clone();
+			let rhs_span = rhs.span.clone();
 			ParserStmt::Set {
 				id: lhs.clone(),
 				value: ParserExpr::BinaryOp(
-					Box::new(ParserExpr::Identifier(lhs)),
-					force_token!(op => Operator),
+					Box::new(lhs.map(ParserExpr::Identifier)),
+					op.map(|x| force_token!(x => Operator)),
 					Box::new(rhs),
-				),
+				).add_span(lhs_span + rhs_span),
 			}
 		})
 	};
 }
 
-pub fn stmt(s: ScopeRecursive) -> token_parser!(ParserStmt : '_) {
+pub fn stmt(s: ScopeRecursive) -> token_parser_no_span!(ParserStmt : '_) {
 	choice((
 		set_stmt!(s.clone(), Set),
 		set_stmt!(s.clone(), operator Neg),

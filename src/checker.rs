@@ -1,9 +1,11 @@
-pub mod context;
-use self::context::{Context, check_stmt};
-use crate::{parser::types::ParserScope, common::stmt::Stmt};
+use self::context::{check_stmt, Context};
+use crate::{common::stmt::Stmt, parser::types::ParserScope};
 use codespan_reporting::diagnostic::Diagnostic;
 use lazy_static::lazy_static;
 use std::sync::Mutex;
+
+// pub mod case;
+mod context;
 
 lazy_static! {
 	static ref DIAGNOSTICS: Mutex<Vec<Diagnostic<usize>>> = Mutex::new(vec![]);
@@ -18,7 +20,7 @@ fn check_inner(scope: &ParserScope, context: Context) {
 		check_stmt(stmt, &context);
 		match &stmt.value {
 			Stmt::Func { body, .. } => {
-				body.as_ref().map(|body| check_inner(&body, Context::Func));
+				body.as_ref().map(|body| check_inner(&body.value, Context::Func));
 			}
 			_ => {}
 		}

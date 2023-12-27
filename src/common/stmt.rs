@@ -1,25 +1,26 @@
 use crate::common::{
-	expr::Expr, func::FuncSignature, ident::Ident, scope::Scope, typed_ident::TypedIdent,
+	expr::Expr, func::FuncSignature, ident::Ident, scope::Scope, span::Spanned,
+	typed_ident::TypedIdent,
 };
 
 #[derive(Debug, Clone)]
 pub enum Stmt<Sc: Scope> {
 	Create {
-		ty_id: TypedIdent,
+		ty_id: Spanned<TypedIdent>,
 		mutable: bool,
-		value: Option<Expr<Sc>>,
+		value: Option<Spanned<Expr<Sc>>>,
 	},
 	Set {
-		id: Ident,
-		value: Expr<Sc>,
+		id: Spanned<Ident>,
+		value: Spanned<Expr<Sc>>,
 	},
 	Func {
-		id: Ident,
+		id: Spanned<Ident>,
 		signature: FuncSignature,
-		body: Option<Sc>,
+		body: Option<Spanned<Sc>>,
 	},
 	Return {
-		value: Expr<Sc>,
+		value: Spanned<Expr<Sc>>,
 		is_yield: bool,
 	},
 }
