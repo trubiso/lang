@@ -15,7 +15,7 @@ use common::span::Span;
 use parser::types::CodeStream;
 use std::fs;
 
-use crate::{checker::check, hoister::hoist};
+use crate::{checker::check, hoister::hoist, resolver::resolve};
 
 // Compilation steps:
 // X - Lexing (into Token)
@@ -36,6 +36,7 @@ pub mod common;
 pub mod hoister;
 pub mod lexer;
 pub mod parser;
+pub mod resolver;
 
 fn main() {
 	let sources = vec!["code"];
@@ -86,7 +87,9 @@ fn main() {
 
 		let hoisted = hoist(&parsed);
 
-		dbg!(hoisted);
+		let resolved = resolve(hoisted, hoister::HoistedScopeData::default());
+
+		dbg!(resolved);
 	}
 
 	if !all_diagnostics.is_empty() {

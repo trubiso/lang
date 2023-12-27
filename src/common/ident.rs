@@ -5,6 +5,8 @@ use super::span::{AddSpan, Spanned};
 // FIXME: PartialEq/Eq will break when you have two ways to call something, eg
 // "::types::Type" vs directly importing "Type"
 
+pub type Id = usize;
+
 /// An Ident is a name given to a variable, a function or a type.
 #[derive(Debug, Hash, Clone, PartialEq, Eq)]
 pub enum Ident {
@@ -17,6 +19,7 @@ pub enum Ident {
 	/// A discarded Ident is a name given to a variable or type specifically to
 	/// mark it as unimportant/inferrable by the compiler.
 	Discarded,
+	Resolved(Id),
 }
 
 impl std::fmt::Display for Ident {
@@ -30,6 +33,7 @@ impl std::fmt::Display for Ident {
 					.unwrap(),
 			),
 			Self::Discarded => f.write_str("_"),
+			Self::Resolved(x) => f.write_fmt(format_args!("@{x}")),
 		}
 	}
 }
@@ -38,6 +42,14 @@ impl Ident {
 	#[must_use]
 	pub fn is_discarded(&self) -> bool {
 		matches!(self, Self::Discarded)
+	}
+
+	#[must_use]
+	pub fn id(&self) -> Id {
+		match self {
+			Self::Resolved(x) => *x,
+			_ => panic!("tried to get id of unresolved ident"),
+		}
 	}
 }
 

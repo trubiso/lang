@@ -12,20 +12,34 @@ use crate::{
 };
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Var {
 	pub ty: Type,
 	pub mutable: bool,
 }
 
 // NOTE: the Spans that these Spanned<T> hold are the declaration spans
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct HoistedScopeData {
 	pub vars: HashMap<Ident, Spanned<Var>>,
 	pub funcs: HashMap<Ident, Spanned<FuncSignature>>,
 }
 
-#[derive(Default, Debug)]
+impl std::ops::Add for HoistedScopeData {
+	type Output = HoistedScopeData;
+
+	fn add(self, mut rhs: Self) -> Self::Output {
+		for (k, v) in self.vars {
+			rhs.vars.insert(k, v);
+		}
+		for (k, v) in self.funcs {
+			rhs.funcs.insert(k, v);
+		}
+		rhs
+	}
+}
+
+#[derive(Clone, Default, Debug)]
 pub struct HoistedScope {
 	pub stmts: Vec<Spanned<Stmt<Self>>>,
 	pub data: HoistedScopeData,
