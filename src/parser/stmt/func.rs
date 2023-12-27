@@ -3,7 +3,7 @@ use crate::{
 		func::{FuncAttribs, FuncLinkage, FuncSignature},
 		ident::Ident,
 		r#type::Type,
-		typed_ident::TypedIdent,
+		typed_ident::TypedIdent, span::AddSpan,
 	},
 	parser::{
 		core::{
@@ -68,11 +68,11 @@ fn func_body(s: ScopeRecursive) -> token_parser!(ParserScope : '_) {
 		jpunct!(FatArrow)
 			.ignore_then(expr(s.clone()))
 			.then_ignore(jpunct!(Semicolon))
-			.map(|expr| ParserScope {
+			.map_with_span(|expr, span| ParserScope {
 				stmts: vec![ParserStmt::Return {
 					value: expr,
 					is_yield: false,
-				}],
+				}.add_span(span)],
 			}),
 		braced!(s),
 	))

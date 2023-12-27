@@ -15,6 +15,8 @@ use common::span::Span;
 use parser::types::CodeStream;
 use std::fs;
 
+use crate::checker::check;
+
 // Compilation steps:
 // X - Lexing (into Token)
 // X - Parsing (into AST)
@@ -29,6 +31,7 @@ use std::fs;
 //   - Codegen (generate LLVM IR)
 //   - Compile (compile LLVM IR down to an actual .o file or executable file)
 
+pub mod checker;
 pub mod common;
 pub mod lexer;
 pub mod parser;
@@ -77,6 +80,8 @@ fn main() {
 				scope
 			}
 		};
+
+		all_diagnostics.append(&mut check(&parsed));
 
 		dbg!(parsed);
 	}

@@ -23,3 +23,20 @@ pub enum Stmt<Sc: Scope> {
 		is_yield: bool,
 	},
 }
+
+impl<Sc: Scope> Stmt<Sc> {
+	pub fn variant(&self) -> &str {
+		match self {
+			Self::Create { value, .. } => value.as_ref().map_or("declare", |_| "create"),
+			Self::Set { .. } => "set",
+			Self::Func { .. } => "function",
+			Self::Return { is_yield, .. } => {
+				if *is_yield {
+					"yield"
+				} else {
+					"return"
+				}
+			}
+		}
+	}
+}

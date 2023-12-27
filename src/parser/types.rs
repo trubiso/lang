@@ -2,7 +2,7 @@ use crate::{
 	common::{
 		expr::Expr,
 		scope::Scope,
-		span::{Span, SpannedRaw},
+		span::{Span, Spanned, SpannedRaw},
 		stmt::Stmt,
 	},
 	lexer::Token,
@@ -21,11 +21,11 @@ pub type ParserStmt = Stmt<ParserScope>;
 
 #[derive(Debug, Clone)]
 pub struct ParserScope {
-	pub stmts: Vec<ParserStmt>,
+	pub stmts: Vec<Spanned<ParserStmt>>,
 }
 
 impl Scope for ParserScope {
-	fn stmts(&self) -> &Vec<crate::common::stmt::Stmt<Self>> {
+	fn stmts(&self) -> &Vec<Spanned<Stmt<Self>>> {
 		&self.stmts
 	}
 }

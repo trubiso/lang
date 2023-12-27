@@ -92,3 +92,14 @@ impl<T> IntoSpan for SpannedRaw<T> {
 		self.1.clone()
 	}
 }
+
+pub trait AddSpan<T>: Sized {
+	fn add_span(self, span: Span) -> Spanned<Self> {
+		Spanned {
+			value: self,
+			span
+		}
+	}
+}
+
+impl<T> AddSpan<T> for T {}
