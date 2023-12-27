@@ -89,7 +89,7 @@ macro_rules! def_token {
 			///     - `i`, `u`, `f` - these alone represent signed integers, unsigned integers and floats respectively, with no specific bit width
 			///     - `i<num>`, `u<num>`, `f<num>` - these represent the above types but with a specific width (floats are restricted to 16, 32, 64 or 128 bits, whereas signed and unsigned integers may range from 1 to 2^23 bits)
 			///     - `iz`, `uz` - these `z` suffixes can only go on integers and represent the pointer width for the target architecture (just like `isize` or `usize`)
-			/// 
+			///
 			/// Note: in hexadecimal values, the `f` suffix is changed to `p`, since `f` already represents a hexadecimal value.
 			#[regex(r"(?:([0-9][0-9_]*|(?:[0-9][0-9_]*)?\.[0-9][0-9_]*|0b[01][01_]*|0o[0-7][0-7_]*)(i(?:z|[0-9]*)|u(?:z|[0-9]*)?|f(?:16|32|64|128)?)?|(0x[0-9a-fA-F][0-9a-fA-F_]*)(i(?:z|[0-9]*)|u(?:z|[0-9]*)?|p(?:16|32|64|128)?)?)", lex_to_str)]
 			NumberLiteral(String),

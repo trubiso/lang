@@ -1,5 +1,8 @@
 use super::add_diagnostic;
-use crate::{common::ident::Ident, common::span::{Span, Spanned}};
+use crate::{
+	common::ident::Ident,
+	common::span::{Span, Spanned},
+};
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use derive_more::Display;
 
