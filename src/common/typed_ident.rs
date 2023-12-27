@@ -15,3 +15,15 @@ impl TypedIdent {
 		self.ident.value.to_string()
 	}
 }
+
+impl Spanned<TypedIdent> {
+	#[must_use]
+	pub fn ident(&self) -> &Ident {
+		&self.value.ident.value
+	}
+
+	#[must_use]
+	pub fn ty(&self) -> &Type {
+		&self.value.ty.value
+	}
+}

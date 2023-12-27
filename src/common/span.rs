@@ -85,6 +85,10 @@ impl<T> Spanned<T> {
 	pub fn map<U>(self, func: impl FnOnce(T) -> U) -> Spanned<U> {
 		func(self.value).add_span(self.span)
 	}
+
+	pub fn map_ref<U>(&self, func: impl FnOnce(&T) -> U) -> Spanned<U> {
+		func(&self.value).add_span(self.span.clone())
+	}
 }
 
 impl<T> IntoSpan for Spanned<T> {

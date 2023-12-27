@@ -15,7 +15,7 @@ use common::span::Span;
 use parser::types::CodeStream;
 use std::fs;
 
-use crate::checker::check;
+use crate::{checker::check, hoister::hoist};
 
 // Compilation steps:
 // X - Lexing (into Token)
@@ -33,6 +33,7 @@ use crate::checker::check;
 
 pub mod checker;
 pub mod common;
+pub mod hoister;
 pub mod lexer;
 pub mod parser;
 
@@ -83,7 +84,9 @@ fn main() {
 
 		all_diagnostics.append(&mut check(&parsed));
 
-		dbg!(parsed);
+		let hoisted = hoist(&parsed);
+
+		dbg!(hoisted);
 	}
 
 	if !all_diagnostics.is_empty() {

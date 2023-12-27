@@ -3,7 +3,7 @@ use crate::common::{r#type::Type, typed_ident::TypedIdent};
 use super::span::{Spanned, AddSpan};
 
 /// An Ident is a name given to a variable, a function or a type.
-#[derive(Debug, Clone)]
+#[derive(Debug, Hash, Clone)]
 pub enum Ident {
 	/// A named Ident is the most basic form of an Ident: it gives a name to an
 	/// object in code.
