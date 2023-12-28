@@ -89,7 +89,7 @@ fn main() {
 
 		let resolved = resolve(hoisted, hoister::HoistedScopeData::default());
 
-		dbg!(resolved);
+		println!("{}", resolved);
 	}
 
 	if !all_diagnostics.is_empty() {

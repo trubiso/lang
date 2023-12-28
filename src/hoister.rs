@@ -61,6 +61,12 @@ impl Scope for HoistedScope {
 	}
 }
 
+impl std::fmt::Display for HoistedScope {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		self.my_fmt(f)
+	}
+}
+
 pub type HoistedExpr = Expr<HoistedScope>;
 pub type HoistedStmt = Stmt<HoistedScope>;
 

@@ -1,5 +1,6 @@
-use super::{scope::Scope, span::Spanned};
+use super::{join::Join, scope::Scope, span::Spanned};
 use crate::common::{ident::Ident, r#type::Type, typed_ident::TypedIdent};
+use derive_more::Display;
 
 #[derive(Debug, Default, Clone)]
 pub struct FuncAttribs {
@@ -7,10 +8,12 @@ pub struct FuncAttribs {
 	pub is_unsafe: bool,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Display, Clone)]
 pub enum FuncLinkage {
+	#[display(fmt = "extern ")]
 	External,
 	#[default]
+	#[display(fmt = "")]
 	Default,
 }
 
@@ -26,4 +29,29 @@ pub struct FuncSignature {
 pub struct Func<Sc: Scope> {
 	pub signature: FuncSignature,
 	pub body: Sc,
+}
+
+impl std::fmt::Display for FuncAttribs {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		if self.is_pure {
+			f.write_str("pure ")?;
+		}
+		if self.is_unsafe {
+			f.write_str("unsafe ")?;
+		}
+		Ok(())
+	}
+}
+
+impl std::fmt::Display for FuncSignature {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		f.write_fmt(format_args!(
+			"{}{}{}{} -> {}",
+			self.linkage,
+			(&self.generics.value).join_comma_wrapped("<", ">"),
+			(&self.args.value).join_comma_wrapped("(", ")"),
+			self.attribs,
+			self.return_ty
+		))
+	}
 }
