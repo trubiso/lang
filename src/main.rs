@@ -87,7 +87,18 @@ fn main() {
 
 		let hoisted = hoist(&parsed);
 
-		let resolved = resolve(hoisted, hoister::HoistedScopeData::default());
+		let resolved = match resolve(hoisted, hoister::HoistedScopeData::default()) {
+			Ok(scope) => scope,
+			Err((scope, diagnostics)) => {
+				for diagnostic in diagnostics {
+					if !have_errors && diagnostic.severity == Severity::Error {
+						have_errors = true;
+					}
+					all_diagnostics.push(diagnostic);
+				}
+				scope
+			}
+		};
 
 		println!("{}", resolved);
 	}

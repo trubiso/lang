@@ -185,7 +185,10 @@ impl<T: Resolve> Resolve for Vec<T> {
 
 impl Resolve for Ident {
 	fn resolve(&self, _data: &HoistedScopeData, mappings: &mut Mappings) -> Self {
-		Self::Resolved(mappings.get_or_add_id(self))
+		match self {
+			Self::Discarded => Self::Discarded,
+			_ => Self::Resolved(mappings.get_or_add_id(self)),
+		}
 	}
 }
 
@@ -212,6 +215,8 @@ impl Resolve for TypedIdent {
 	}
 }
 
+// TODO: resolve_must_exist(), sometimes we don't want to create new things,
+// e.g. in Expr
 impl Resolve for HoistedExpr {
 	fn resolve(&self, data: &HoistedScopeData, mappings: &mut Mappings) -> Self {
 		match self {
@@ -240,14 +245,31 @@ impl Resolve for HoistedExpr {
 impl Resolve for FuncSignature {
 	/// WARNING: adds args and generics to Mappings
 	fn resolve(&self, data: &HoistedScopeData, mappings: &mut Mappings) -> Self {
-		let resolved_args = self.args.resolve(data, mappings);
-		for arg in &resolved_args.value {
-			mappings.set_repr(&arg.ident().id(), MapRepr::Var);
+		let mut resolved_generics = Vec::new();
+		for generic in &self.generics.value {
+			let id = count();
+			mappings.insert_ty(id, generic.value.clone());
+			resolved_generics.push(Ident::Resolved(id).add_span(generic.span.clone()))
 		}
-		let resolved_generics = self.generics.resolve(data, mappings);
-		for generic in &resolved_generics.value {
-			mappings.set_repr(&generic.value.id(), MapRepr::Type);
+		let mut resolved_args = Vec::new();
+		for arg in &self.args.value {
+			let new_ident = if arg.ident().is_discarded() {
+				Ident::Discarded
+			} else {
+				let id = count();
+				mappings.insert_var(id, arg.ident().clone());
+				Ident::Resolved(id)
+			};
+			resolved_args.push(
+				TypedIdent {
+					ty: arg.value.ty.resolve(data, mappings),
+					ident: new_ident.add_span(arg.value.ident.span.clone()),
+				}
+				.add_span(arg.span.clone()),
+			)
 		}
+		let resolved_generics = resolved_generics.add_span(self.generics.span.clone());
+		let resolved_args = resolved_args.add_span(self.args.span.clone());
 		Self {
 			attribs: self.attribs.clone(),
 			linkage: self.linkage.clone(),
@@ -265,11 +287,15 @@ impl Resolve for HoistedStmt {
 				ty_id,
 				mutable,
 				value,
-			} => Self::Create {
-				ty_id: ty_id.resolve(data, mappings),
-				mutable: *mutable,
-				value: value.resolve(data, mappings),
-			},
+			} => {
+				let ty_id = ty_id.resolve(data, mappings);
+				mappings.ensure_repr(ty_id.ident().id(), MapRepr::Var, ty_id.span.clone());
+				Self::Create {
+					ty_id: ty_id.resolve(data, mappings),
+					mutable: *mutable,
+					value: value.resolve(data, mappings),
+				}
+			}
 			Self::Set { id, value } => {
 				let id = id.resolve(data, mappings);
 				mappings.set_repr(&id.value.id(), MapRepr::Var);
@@ -283,19 +309,9 @@ impl Resolve for HoistedStmt {
 				signature,
 				body,
 			} => {
+				// the id will have been created for us already
 				let id = id.resolve(data, mappings);
-				if let Some(_) = mappings.get_repr(&id.value.id()) {
-					// TODO: deal with edge cases (redeclaring a function, declaring -> defining,
-					// redefining, etc), also improve this awful error message
-					add_diagnostic(
-						Diagnostic::error()
-							.with_message("disallowed redeclaration")
-							.with_labels(vec![Label::primary(id.span.file_id, id.span.range())
-								.with_message("new declaration here")]),
-					)
-				}
-				// ensure we're calling a func
-				mappings.set_repr(&id.value.id(), MapRepr::Func);
+				mappings.ensure_repr(id.value.id(), MapRepr::Func, id.span.clone());
 				let mut mappings = mappings.clone();
 				Self::Func {
 					id,
@@ -331,8 +347,15 @@ impl Resolve for HoistedScope {
 	}
 }
 
-pub fn resolve(scope: HoistedScope, imported_data: HoistedScopeData) -> HoistedScope {
-	let data = scope.data.clone() + imported_data;
-	let (data, mut mappings) = data.just_make_all_funcs_and_vars();
-	scope.resolve(&data, &mut mappings)
+pub fn resolve(
+	scope: HoistedScope,
+	imported_data: HoistedScopeData,
+) -> Result<HoistedScope, (HoistedScope, Vec<Diagnostic<usize>>)> {
+	let resolved = scope.resolve(&imported_data, &mut Mappings::default());
+	let diagnostics = DIAGNOSTICS.lock().unwrap();
+	if diagnostics.is_empty() {
+		Ok(resolved)
+	} else {
+		Err((resolved, diagnostics.clone()))
+	}
 }

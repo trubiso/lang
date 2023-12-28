@@ -1,46 +1,17 @@
-let a = 3;
-mut b = 5;
-i27 c = 9;
-mut f64 d = 3;
-d = 4;
-d -= 5;
+void main() {
+	let x = add(2, 3);
 
-i32 sum(i32 a, i32 b) => a + b;
-i92 sub(i92 a, i92 b) {
-	let c = a;
-	let d = b;
-	return c;
+	T add<T>(T a, T b) => a + b;
+
+	i32 a() {
+		i32 b() {
+			i32 c() {
+
+			}
+		}
+	}
+
+	let y = add<i32>(2, 3);
+
+	let a = 10;
 }
-
-T add<T>(T a, T b) => a + b;
-
-i32 get(i32 _);
-
-D cast<D, S>(S);
-
-extern T add<T>(T, T) pure unsafe;
-
-let x = {
-	let a = 3;
-	let b = 5;
-	yield a + 2 * b;
-} - 3 + {
-	let a = 8;
-	let b = -3;
-	yield 3 * a - b * b * {
-		yield 9;
-	};
-};
-
-let q = 9i27;
-let g = 93.2f32;
-let h = 0xfaffap32;
-let f = 39f;
-
-isize k = 3;
-
-let josh = add(3, 4)(5, 6)<i32>(7, 8);
-
-let Josh = 3;
-
-i32 WronglyCasedFunction<SHIN_BONE>(SHIN_BONE aVariable) {}
