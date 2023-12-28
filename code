@@ -17,4 +17,10 @@ void main() {
 	let k = q + 3;
 	let q = 11;
 	let k = q - 3;
+
+	let glu = fish + cat - dog;
+	shin = 9;
+	let _ = 10;
+	let _ = 11;
+	let my_var = _ + 3;
 }
