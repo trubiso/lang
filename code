@@ -13,5 +13,8 @@ void main() {
 
 	let y = add<i32>(2, 3);
 
-	let a = 10;
+	let q = 10;
+	let k = q + 3;
+	let q = 11;
+	let k = q - 3;
 }

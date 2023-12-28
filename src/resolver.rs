@@ -280,6 +280,7 @@ impl Resolve for FuncSignature {
 	}
 }
 
+// TODO: shadowing doesn't work!! :( resolve_make_new?
 impl Resolve for HoistedStmt {
 	fn resolve(&self, data: &HoistedScopeData, mappings: &mut Mappings) -> Self {
 		match self {
