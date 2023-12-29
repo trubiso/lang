@@ -1,11 +1,11 @@
 use super::{join::Join, r#type::Type, scope::Scope, span::Spanned};
-use crate::{common::ident::Ident, lexer::Operator};
+use crate::{common::ident::Ident, lexer::{Operator, NumberLiteral}};
 
 // TODO: dot access (a.b), deref, ref, construct (Struct {a: 3, b: 5}), array
 // literal?, tuple??
 #[derive(Debug, Clone)]
 pub enum Expr<Sc: Scope> {
-	NumberLiteral(String),
+	NumberLiteral(NumberLiteral),
 	Identifier(Ident),
 	BinaryOp(
 		Box<Spanned<Expr<Sc>>>,
@@ -24,7 +24,7 @@ pub enum Expr<Sc: Scope> {
 impl<Sc: Scope + std::fmt::Display> std::fmt::Display for Expr<Sc> {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
-			Expr::NumberLiteral(num) => f.write_str(num),
+			Expr::NumberLiteral(num) => f.write_fmt(format_args!("{num}")),
 			Expr::Identifier(ident) => f.write_fmt(format_args!("{ident}")),
 			Expr::BinaryOp(lhs, op, rhs) => f.write_fmt(format_args!("({lhs} {op} {rhs})")),
 			Expr::UnaryOp(op, value) => f.write_fmt(format_args!("({op}{value})")),

@@ -3,10 +3,100 @@ use chumsky::Span as _;
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use derive_more::Display;
 use logos::{Lexer, Logos};
+use regex::{Match, Regex};
 use std::fmt::Display;
 
 fn lex_to_str(lexer: &Lexer<'_, Token>) -> String {
 	lexer.slice().trim().to_string()
+}
+
+#[derive(Debug, Display, PartialEq, Eq, Clone, Hash)]
+pub enum NumberLiteralKind {
+	Decimal,
+	Binary,
+	Octal,
+	Hex,
+}
+
+#[derive(Debug, Display, PartialEq, Eq, Clone, Hash)]
+#[display(fmt = "TODO")]
+pub enum NumberLiteralType {
+	/// outer option = has width specified, inner option: None = pointer width,
+	/// Some = specific width
+	Integer {
+		bits: Option<Option<u32>>,
+		signed: bool,
+	},
+	/// option: None = no width specified, Some = width specified
+	Float { bits: Option<u8> },
+}
+
+#[derive(Debug, Display, PartialEq, Eq, Clone, Hash)]
+#[display(fmt = "{value} (TODO: add ty)")]
+pub struct NumberLiteral {
+	pub value: String,
+	pub kind: NumberLiteralKind,
+	pub ty: Option<NumberLiteralType>,
+}
+
+fn skip_first(s: &str) -> Option<&str> {
+	let s = s.chars().next().map(|c| &s[c.len_utf8()..]);
+	s.filter(|x| x.len() > 0)
+}
+
+fn parse_number_literal(lexer: &Lexer<'_, Token>) -> NumberLiteral {
+	let data = lex_to_str(lexer);
+	let re = Regex::new(r"^(?:([0-9][0-9_]*|(?:[0-9][0-9_]*)?\.[0-9][0-9_]*|0b[01][01_]*|0o[0-7][0-7_]*)(i(?:z|[0-9]*)|u(?:z|[0-9]*)?|f(?:16|32|64|128)?)?|(0x[0-9a-fA-F][0-9a-fA-F_]*)(i(?:z|[0-9]*)|u(?:z|[0-9]*)?|p(?:16|32|64|128)?)?)$").unwrap();
+	fn parse_ty(ty: Match<'_>) -> NumberLiteralType {
+		let ty = ty.as_str();
+		let class = ty.chars().nth(0).expect("what");
+		match class {
+			'i' | 'u' => NumberLiteralType::Integer {
+				bits: skip_first(ty).map(|x| {
+					if x == "z" {
+						None
+					} else {
+						Some(x.parse().unwrap())
+					}
+				}),
+				signed: class == 'i',
+			},
+			'f' | 'p' => NumberLiteralType::Float {
+				bits: skip_first(ty).map(|x| x.parse().unwrap()),
+			},
+			_ => unreachable!(),
+		}
+	}
+	let Some(captures) = re.captures(&data) else { panic!("how did you get here?") };
+	let literal_part;
+	let kind;
+	let ty;
+	match captures.get(3) {
+		Some(hex) => {
+			literal_part = hex.as_str();
+			kind = NumberLiteralKind::Hex;
+			ty = captures.get(4).map(parse_ty);
+		}
+		None => {
+			literal_part = captures
+				.get(1)
+				.expect("you broke my regex, how dare you?")
+				.as_str();
+			kind = if literal_part.starts_with("0b") {
+				NumberLiteralKind::Binary
+			} else if literal_part.starts_with("0o") {
+				NumberLiteralKind::Octal
+			} else {
+				NumberLiteralKind::Decimal
+			};
+			ty = captures.get(2).map(parse_ty);
+		}
+	}
+	NumberLiteral {
+		value: literal_part.to_string(),
+		kind,
+		ty,
+	}
 }
 
 macro_rules! tok_venum {
@@ -90,8 +180,8 @@ macro_rules! def_token {
 			///     - `iz`, `uz` - these `z` suffixes can only go on integers and represent the pointer width for the target architecture (just like `isize` or `usize`)
 			///
 			/// Note: in hexadecimal values, the `f` suffix is changed to `p`, since `f` already represents a hexadecimal value.
-			#[regex(r"(?:([0-9][0-9_]*|(?:[0-9][0-9_]*)?\.[0-9][0-9_]*|0b[01][01_]*|0o[0-7][0-7_]*)(i(?:z|[0-9]*)|u(?:z|[0-9]*)?|f(?:16|32|64|128)?)?|(0x[0-9a-fA-F][0-9a-fA-F_]*)(i(?:z|[0-9]*)|u(?:z|[0-9]*)?|p(?:16|32|64|128)?)?)", lex_to_str)]
-			NumberLiteral(String),
+			#[regex(r"(?:([0-9][0-9_]*|(?:[0-9][0-9_]*)?\.[0-9][0-9_]*|0b[01][01_]*|0o[0-7][0-7_]*)(i(?:z|[0-9]*)|u(?:z|[0-9]*)?|f(?:16|32|64|128)?)?|(0x[0-9a-fA-F][0-9a-fA-F_]*)(i(?:z|[0-9]*)|u(?:z|[0-9]*)?|p(?:16|32|64|128)?)?)", parse_number_literal)]
+			NumberLiteral(NumberLiteral),
 			#[regex(r"'.'", lex_to_str)]
 			CharLiteral(String),
 			#[regex(r#""(?:[^"]|\\")*""#, lex_to_str)]

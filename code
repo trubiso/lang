@@ -24,3 +24,11 @@ void main() {
 	let _ = 11;
 	// let my_var = _ + 3;
 }
+
+void test_nums() {
+	let q = 9i27;
+	let g = 93.2f32;
+	let h = 0xfaffap32;
+	let y = 39i;
+	let f = 39f;
+}
