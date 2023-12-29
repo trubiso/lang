@@ -2,7 +2,7 @@ use super::span::Spanned;
 use crate::common::{ident::Ident, r#type::Type};
 use derive_more::Display;
 
-#[derive(Debug, Display, Clone)]
+#[derive(Debug, Display, Clone, PartialEq, Eq)]
 #[display(fmt = "{ty} {ident}")]
 pub struct TypedIdent {
 	pub ty: Spanned<Type>,

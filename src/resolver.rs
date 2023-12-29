@@ -196,14 +196,30 @@ impl Resolve for HoistedScope {
 		// add hoisted funcs from scope (we only need to add vars in top level, vars in
 		// non-top-level contexts are actually inaccurate due to shadowing)
 		self.data.make_all_funcs(&mut data, &mut mappings);
-		Self {
+		let mut new_scope = Self {
 			stmts: self
 				.stmts
 				.iter()
 				.map(|x| x.resolve(&mut data, &mut mappings))
 				.collect(),
-			data: data.clone(),
-		}
+			data: HoistedScopeData::default(),
+		};
+		new_scope.data = HoistedScopeData {
+			// FIXME: this is inaccurate in case of shadowing
+			vars: self
+				.data
+				.vars
+				.iter()
+				.map(|(ident, var)| {
+					(
+						Ident::Resolved(*mappings.get_by_ident(ident).unwrap()),
+						var.clone(),
+					)
+				})
+				.collect(),
+			funcs: data.funcs,
+		};
+		new_scope
 	}
 }
 

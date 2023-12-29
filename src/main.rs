@@ -34,6 +34,7 @@ use crate::{checker::check, hoister::hoist, resolver::resolve};
 pub mod checker;
 pub mod common;
 pub mod hoister;
+pub mod infer;
 pub mod lexer;
 pub mod parser;
 pub mod resolver;
@@ -101,6 +102,8 @@ fn main() {
 		};
 
 		println!("{}", resolved);
+
+		infer::infer(&resolved);
 	}
 
 	if !all_diagnostics.is_empty() {
