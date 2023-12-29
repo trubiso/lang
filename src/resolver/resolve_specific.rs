@@ -11,7 +11,9 @@ use crate::{
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 
 pub trait ResolveSpecific {
+	#[must_use]
 	fn resolve_make_new(&self, data: &HoistedScopeData, mappings: &mut Mappings) -> Self;
+	#[must_use]
 	fn resolve_must_exist(&self, data: &HoistedScopeData, mappings: &mut Mappings) -> Self;
 }
 
@@ -69,8 +71,7 @@ pub fn nonexistent_item_diagnostic(span: Span, ident: &Ident) {
 			.with_message("referenced nonexistent item")
 			.with_labels(vec![Label::primary(span.file_id, span.range())
 				.with_message(format!(
-					"'{}' is not defined in the current scope",
-					ident
+					"'{ident}' is not defined in the current scope"
 				))]),
 	);
 }
@@ -96,14 +97,11 @@ impl ResolveSpecific for Spanned<Ident> {
 		if let Ident::Discarded = self.value {
 			discarded_ident_diagnostic(self.span.clone());
 			fail_ident()
+		} else if let Some(id) = mappings.get_by_ident(&self.value) {
+			Ident::Resolved(*id)
 		} else {
-			match mappings.get_by_ident(&self.value) {
-				Some(id) => Ident::Resolved(id.clone()),
-				None => {
-					nonexistent_item_diagnostic(self.span.clone(), &self.value);
-					fail_ident()
-				}
-			}
+			nonexistent_item_diagnostic(self.span.clone(), &self.value);
+			fail_ident()
 		}
 		.add_span(self.span.clone())
 	}
@@ -124,12 +122,11 @@ impl ResolveSpecific for Spanned<Type> {
 
 	fn resolve_must_exist(&self, _data: &HoistedScopeData, mappings: &mut Mappings) -> Self {
 		match &self.value {
-			Type::User(name) => Type::User(match mappings.get_by_ident(name) {
-				Some(id) => Ident::Resolved(id.clone()),
-				None => {
-					nonexistent_item_diagnostic(self.span.clone(), name);
-					fail_ident()
-				}
+			Type::User(name) => Type::User(if let Some(id) = mappings.get_by_ident(name) {
+				Ident::Resolved(id.clone())
+			} else {
+				nonexistent_item_diagnostic(self.span.clone(), name);
+				fail_ident()
 			})
 			.add_span(self.span.clone()),
 			Type::Generic(..) => todo!("(generic type parsing is not even implemented yet)"),
@@ -139,7 +136,7 @@ impl ResolveSpecific for Spanned<Type> {
 }
 
 impl ResolveSpecific for TypedIdent {
-	/// NOTE: assumes ty is resolve_must_exist
+	/// NOTE: assumes ty is `resolve_must_exist`
 	fn resolve_make_new(&self, data: &HoistedScopeData, mappings: &mut Mappings) -> Self {
 		Self {
 			ty: self.ty.resolve_must_exist(data, mappings),

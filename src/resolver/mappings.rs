@@ -25,25 +25,28 @@ pub struct Mappings {
 }
 
 impl Mappings {
+	#[must_use]
 	pub fn get_or_add_id(&mut self, id: &Ident) -> Id {
-		match self.mappings.get_by_right(id) {
-			Some(x) => *x,
-			None => {
-				let new_id = count();
-				self.mappings.insert(new_id, id.clone());
-				new_id
-			}
+		if let Some(x) = self.mappings.get_by_right(id) {
+			*x
+		} else {
+			let new_id = count();
+			self.mappings.insert(new_id, id.clone());
+			new_id
 		}
 	}
 
+	#[must_use]
 	pub fn get_by_id(&self, id: &Id) -> Option<&Ident> {
 		self.mappings.get_by_left(id)
 	}
 
+	#[must_use]
 	pub fn get_by_ident(&self, ident: &Ident) -> Option<&Id> {
 		self.mappings.get_by_right(ident)
 	}
 
+	#[must_use]
 	pub fn get_repr(&self, id: &Id) -> Option<MapRepr> {
 		self.reprs.get(id).cloned()
 	}
@@ -88,6 +91,6 @@ fn type_mismatch_diagnostic(span: Span, used: MapRepr, desired: MapRepr) {
 		Diagnostic::error()
 			.with_message("type mismatch")
 			.with_labels(vec![Label::primary(span.file_id, span.range())
-				.with_message(format!("used {} as {}", used, desired))]),
-	)
+				.with_message(format!("used {used} as {desired}"))]),
+	);
 }

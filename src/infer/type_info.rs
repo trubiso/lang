@@ -64,10 +64,11 @@ impl TypeInfo {
 			),
 			TypeInfo::Generic(x) => format!("[generic @{x}]"),
 			TypeInfo::UnknownGeneric(x) => format!("[unresolved generic @{x}]"),
-			TypeInfo::Bottom => format!("[!]"),
+			TypeInfo::Bottom => "[!]".into(),
 		}
 	}
 
+	#[must_use]
 	pub fn display(&self, engine: &Engine) -> String {
 		self.display_custom(|id| engine.tys[&id.value].display(engine))
 	}

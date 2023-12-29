@@ -10,7 +10,7 @@ use crate::{
 		func::FuncSignature,
 		ident::Id,
 		r#type::{BuiltInType, Type},
-		span::{AddSpan, Span, Spanned},
+		span::{AddSpan, Spanned},
 		stmt::Stmt,
 	},
 	hoister::{HoistedExpr, HoistedScope},
@@ -59,8 +59,7 @@ impl Engine {
 			(SameAs(a), _) => self.unify_inner(a, b),
 			(_, SameAs(b)) => self.unify_inner(a, b),
 
-			(Bottom, _) => Ok(()),
-			(_, Bottom) => Ok(()),
+			(Bottom, _) | (_, Bottom) => Ok(()),
 
 			(Unknown, _) => {
 				self.tys.insert(a.value, TypeInfo::SameAs(b));
@@ -74,44 +73,46 @@ impl Engine {
 			(a, b) => Err({
 				let a = a.display(self);
 				let b = b.display(self);
-				(format!("could not unify {} and {}", a, b), a, b)
+				(format!("could not unify {a} and {b}"), a, b)
 			}),
 		}
 	}
 
-	/// Returns TypeInfo::Bottom if unification failed, otherwise returns
-	/// TypeInfo corresponding to the unified type of both sides. Allows
+	/// Returns `TypeInfo::Bottom` if unification failed, otherwise returns
+	/// `TypeInfo` corresponding to the unified type of both sides. Allows
 	/// changing the name and notes of the error.
 	pub fn unify_custom_error(
 		&mut self,
 		a: Spanned<TypeId>,
 		b: Spanned<TypeId>,
 		title: &str,
-		notes: Vec<&str>,
+		notes: &[&str],
 	) -> TypeInfo {
 		let unified = self.unify_inner(a.clone(), b.clone());
 		if let Err(ref err) = unified {
-			let mut notes: Vec<String> = notes.iter().map(|x| x.to_string()).collect();
+			let mut notes: Vec<String> = notes.iter().map(|x| (*x).to_string()).collect();
 			notes.push(err.0.clone());
 			add_diagnostic(
 				Diagnostic::error()
 					.with_message(title)
 					.with_labels(vec![
-						Label::primary(a.span.file_id, a.span.range()).with_message(format!("({})", err.1)),
-						Label::primary(b.span.file_id, b.span.range()).with_message(format!("({})", err.2)),
+						Label::primary(a.span.file_id, a.span.range())
+							.with_message(format!("({})", err.1)),
+						Label::primary(b.span.file_id, b.span.range())
+							.with_message(format!("({})", err.2)),
 					])
 					.with_notes(notes),
-			)
+			);
 		}
 		unified.map_or(TypeInfo::Bottom, |_| {
 			self.tys.get(&a.value).unwrap().clone()
 		})
 	}
 
-	/// Returns TypeInfo::Bottom if unification failed, otherwise returns
-	/// TypeInfo corresponding to the unified type of both sides.
+	/// Returns `TypeInfo::Bottom` if unification failed, otherwise returns
+	/// `TypeInfo` corresponding to the unified type of both sides.
 	pub fn unify(&mut self, a: Spanned<TypeId>, b: Spanned<TypeId>) -> TypeInfo {
-		self.unify_custom_error(a, b, "type conflict", vec![])
+		self.unify_custom_error(a, b, "type conflict", &[])
 	}
 
 	pub fn dump(&self) {
@@ -143,11 +144,13 @@ impl ToInfo for Spanned<Type> {
 		match &self.value {
 			Type::User(x) => engine()
 				.tys
-				.get(&mappings.named_tys.get(&x.id()).expect(&format!(
-					"type {} doesn't exist (options: {:?})",
-					x.id(),
-					mappings.named_tys
-				)))
+				.get(mappings.named_tys.get(&x.id()).unwrap_or_else(|| {
+					panic!(
+						"type {} doesn't exist (options: {:?})",
+						x.id(),
+						mappings.named_tys
+					)
+				}))
 				.expect("??")
 				.clone()
 				.add_span(self.span.clone()),
@@ -214,13 +217,14 @@ impl ToInfo for Spanned<HoistedExpr> {
 				}
 				.add_span(self.span.clone())
 			}
-			Expr::Identifier(x) => match mappings.var_tys.get(&x.id()) {
-				Some(x) => TypeInfo::SameAs(x.clone()).add_span(self.span.clone()),
-				None => {
+			Expr::Identifier(x) => {
+				if let Some(x) = mappings.var_tys.get(&x.id()) {
+					TypeInfo::SameAs(x.clone()).add_span(self.span.clone())
+				} else {
 					println!("we couldn't get {}", x.id());
 					panic!("??")
 				}
-			},
+			}
 			Expr::BinaryOp(lhs, _op, rhs) => {
 				// TODO: allow ops between different tys with custom return tys
 				let lhs = lhs.convert_and_add(mappings);
@@ -273,11 +277,9 @@ impl ToInfo for Spanned<HoistedScope> {
 					let var_ty = mappings
 						.var_tys
 						.get(&ty_id.ident().id())
-						.expect(&format!(
-							"couldn't get {} from {:?}",
-							ty_id.ident().id(),
-							mappings
-						))
+						.unwrap_or_else(|| {
+							panic!("couldn't get {} from {mappings:?}", ty_id.ident().id())
+						})
 						.clone();
 					if let Some(value) = value {
 						let value_ty = value.convert_and_add(mappings);
@@ -314,7 +316,7 @@ impl ToInfo for Spanned<HoistedScope> {
 							return_ty,
 							actual_return,
 							"type conflict: incorrect return type",
-							vec![&format!(
+							&[&format!(
 								"return type was declared to be {} but a value of type {} was returned instead{}",
 								return_ty_ty,
 								actual_return_ty_display,

@@ -56,7 +56,7 @@ where
 				"{}{ty_id}{}",
 				if *mutable { "mut " } else { "" },
 				match value {
-					Some(x) => format!(" = {}", x),
+					Some(x) => format!(" = {x}"),
 					None => String::new(),
 				}
 			)),

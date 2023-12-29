@@ -37,7 +37,7 @@ fn add_diagnostic(diagnostic: Diagnostic<usize>) {
 fn count() -> Id {
 	let mut counter = COUNTER.lock().unwrap();
 	counter.add_assign(1);
-	return *counter;
+	*counter
 }
 
 impl Resolve for Ident {
@@ -83,10 +83,10 @@ impl Resolve for Spanned<HoistedExpr> {
 			),
 			Expr::BinaryOp(lhs, op, rhs) => Expr::BinaryOp(
 				lhs.resolve(data, mappings),
-				op.clone(),
+				op,
 				rhs.resolve(data, mappings),
 			),
-			Expr::UnaryOp(op, value) => Expr::UnaryOp(op.clone(), value.resolve(data, mappings)),
+			Expr::UnaryOp(op, value) => Expr::UnaryOp(op, value.resolve(data, mappings)),
 			Expr::Scope(scope) => Expr::Scope(scope.resolve(data, mappings)),
 			Expr::Call {
 				callee,
@@ -109,7 +109,7 @@ impl Resolve for FuncSignature {
 		for generic in &self.generics.value {
 			let id = count();
 			mappings.insert_ty(id, generic.value.clone());
-			resolved_generics.push(Ident::Resolved(id).add_span(generic.span.clone()))
+			resolved_generics.push(Ident::Resolved(id).add_span(generic.span.clone()));
 		}
 		let mut resolved_args = Vec::new();
 		for arg in &self.args.value {
@@ -126,7 +126,7 @@ impl Resolve for FuncSignature {
 					ident: new_ident.add_span(arg.value.ident.span.clone()),
 				}
 				.add_span(arg.span.clone()),
-			)
+			);
 		}
 		let resolved_generics = resolved_generics.add_span(self.generics.span.clone());
 		let resolved_args = resolved_args.add_span(self.args.span.clone());
@@ -175,8 +175,8 @@ impl Resolve for HoistedStmt {
 				let mut mappings = mappings.clone();
 				Self::Func {
 					id,
-					signature: signature.resolve(&data, &mut mappings),
-					body: body.resolve(&data, &mut mappings),
+					signature: signature.resolve(data, &mut mappings),
+					body: body.resolve(data, &mut mappings),
 				}
 			}
 			Self::Return { value, is_yield } => Self::Return {
@@ -200,7 +200,7 @@ impl Resolve for HoistedScope {
 			stmts: self
 				.stmts
 				.iter()
-				.map(|x| x.resolve(&mut data, &mut mappings))
+				.map(|x| x.resolve(&data, &mut mappings))
 				.collect(),
 			data: HoistedScopeData::default(),
 		};
@@ -226,10 +226,10 @@ impl Resolve for HoistedScope {
 }
 
 pub fn resolve(
-	scope: HoistedScope,
-	imported_data: HoistedScopeData,
+	scope: &HoistedScope,
+	imported_data: &HoistedScopeData,
 ) -> Result<HoistedScope, (HoistedScope, Vec<Diagnostic<usize>>)> {
-	let resolved = scope.resolve(&imported_data, &mut Mappings::default());
+	let resolved = scope.resolve(imported_data, &mut Mappings::default());
 	let diagnostics = DIAGNOSTICS.lock().unwrap();
 	if diagnostics.is_empty() {
 		Ok(resolved)

@@ -10,7 +10,7 @@ where
 		f.write_str("{\n")?;
 		for stmt in self.stmts() {
 			let stmt = format!("{stmt}")
-				.split("\n")
+				.split('\n')
 				.map(|x| "\t".to_string() + x + "\n")
 				.reduce(|acc, b| acc + &b)
 				.unwrap_or_default();

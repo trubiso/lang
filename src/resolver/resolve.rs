@@ -2,6 +2,7 @@ use super::mappings::Mappings;
 use crate::{common::span::Spanned, hoister::HoistedScopeData};
 
 pub trait Resolve {
+	#[must_use]
 	fn resolve(&self, data: &HoistedScopeData, mappings: &mut Mappings) -> Self;
 }
 

@@ -24,7 +24,7 @@ pub enum NumberLiteralType {
 	/// Some = specific width
 	#[display(fmt = "{}", r#"match bits {
 		Some(x) => format!("{}{}", if *signed {"i"} else {"u"}, match x {Some(x) => format!("{x}"), None => "size".into()}),
-		None => (if *signed { "int" } else { "uint" }).into()
+		None => if *signed { "int" } else { "uint" }.into()
 	}"#)]
 	Integer {
 		bits: Option<Option<u32>>,
@@ -39,6 +39,7 @@ pub enum NumberLiteralType {
 }
 
 impl NumberLiteralType {
+	#[must_use]
 	pub fn has_bits(&self) -> bool {
 		match self {
 			Self::Integer { bits, signed: _ } => bits.is_some(),
@@ -60,17 +61,15 @@ pub struct NumberLiteral {
 
 fn skip_first(s: &str) -> Option<&str> {
 	let s = s.chars().next().map(|c| &s[c.len_utf8()..]);
-	s.filter(|x| x.len() > 0)
+	s.filter(|x| !x.is_empty())
 }
 
 // TODO: force numbers with . to have NumberLiteralType::Float, and if another
 // type is specified, throw an error
 fn parse_number_literal(lexer: &Lexer<'_, Token>) -> NumberLiteral {
-	let data = lex_to_str(lexer);
-	let re = Regex::new(r"^(?:([0-9][0-9_]*|(?:[0-9][0-9_]*)?\.[0-9][0-9_]*|0b[01][01_]*|0o[0-7][0-7_]*)(i(?:z|[0-9]*)|u(?:z|[0-9]*)?|f(?:16|32|64|128)?)?|(0x[0-9a-fA-F][0-9a-fA-F_]*)(i(?:z|[0-9]*)|u(?:z|[0-9]*)?|p(?:16|32|64|128)?)?)$").unwrap();
 	fn parse_ty(ty: Match<'_>) -> NumberLiteralType {
 		let ty = ty.as_str();
-		let class = ty.chars().nth(0).expect("what");
+		let class = ty.chars().next().expect("what");
 		match class {
 			'i' | 'u' => NumberLiteralType::Integer {
 				bits: skip_first(ty).map(|x| {
@@ -88,30 +87,30 @@ fn parse_number_literal(lexer: &Lexer<'_, Token>) -> NumberLiteral {
 			_ => unreachable!(),
 		}
 	}
+
+	let data = lex_to_str(lexer);
+	let re = Regex::new(r"^(?:([0-9][0-9_]*|(?:[0-9][0-9_]*)?\.[0-9][0-9_]*|0b[01][01_]*|0o[0-7][0-7_]*)(i(?:z|[0-9]*)|u(?:z|[0-9]*)?|f(?:16|32|64|128)?)?|(0x[0-9a-fA-F][0-9a-fA-F_]*)(i(?:z|[0-9]*)|u(?:z|[0-9]*)?|p(?:16|32|64|128)?)?)$").unwrap();
 	let Some(captures) = re.captures(&data) else { panic!("how did you get here?") };
 	let literal_part;
 	let kind;
 	let ty;
-	match captures.get(3) {
-		Some(hex) => {
-			literal_part = hex.as_str();
-			kind = NumberLiteralKind::Hex;
-			ty = captures.get(4).map(parse_ty);
-		}
-		None => {
-			literal_part = captures
-				.get(1)
-				.expect("you broke my regex, how dare you?")
-				.as_str();
-			kind = if literal_part.starts_with("0b") {
-				NumberLiteralKind::Binary
-			} else if literal_part.starts_with("0o") {
-				NumberLiteralKind::Octal
-			} else {
-				NumberLiteralKind::Decimal
-			};
-			ty = captures.get(2).map(parse_ty);
-		}
+	if let Some(hex) = captures.get(3) {
+		literal_part = hex.as_str();
+		kind = NumberLiteralKind::Hex;
+		ty = captures.get(4).map(parse_ty);
+	} else {
+		literal_part = captures
+			.get(1)
+			.expect("you broke my regex, how dare you?")
+			.as_str();
+		kind = if literal_part.starts_with("0b") {
+			NumberLiteralKind::Binary
+		} else if literal_part.starts_with("0o") {
+			NumberLiteralKind::Octal
+		} else {
+			NumberLiteralKind::Decimal
+		};
+		ty = captures.get(2).map(parse_ty);
 	}
 	NumberLiteral {
 		value: literal_part.to_string(),

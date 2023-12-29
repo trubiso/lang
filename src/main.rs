@@ -88,7 +88,7 @@ fn main() {
 
 		let hoisted = hoist(&parsed);
 
-		let resolved = match resolve(hoisted, hoister::HoistedScopeData::default()) {
+		let resolved = match resolve(&hoisted, &hoister::HoistedScopeData::default()) {
 			Ok(scope) => scope,
 			Err((scope, diagnostics)) => {
 				for diagnostic in diagnostics {
@@ -101,7 +101,7 @@ fn main() {
 			}
 		};
 
-		println!("{}", resolved);
+		println!("{resolved}");
 
 		match infer::infer(&resolved.add_span(Span::new(id, 0..code_len))) {
 			Ok(()) => {}
