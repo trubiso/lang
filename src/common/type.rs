@@ -46,7 +46,7 @@ impl Spanned<Type> {
 
 // TODO: figure out strings and chars
 
-/// A `BuiltInType` is a kind of `Type` that comes with the language itself.
+/// A `BuiltIn` is a kind of `Type` that comes with the language itself.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BuiltIn {
 	/// A numeric type represented by i<num> or u<num>, depending on whether

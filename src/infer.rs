@@ -1,15 +1,10 @@
 // sincere thanks to https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=174ca95a8b938168764846e97d5e9a2c
 
-use self::{
-	to_info::ToInfo,
-	type_info::{TypeId, TypeInfo},
-};
+use self::{engine::Engine, mappings::Mappings, to_info::ToInfo, type_info::TypeInfo};
 use crate::{
 	common::{
-		diagnostics::add_diagnostic,
 		expr::Expr,
 		func::Signature,
-		ident::Id,
 		r#type::{BuiltIn, Type},
 		span::{Add, Spanned},
 		stmt::Stmt,
@@ -17,115 +12,13 @@ use crate::{
 	hoister::{HoistedExpr, HoistedScope},
 	lexer::NumberLiteralType,
 };
-use codespan_reporting::diagnostic::{Diagnostic, Label};
-use itertools::Itertools;
 use lazy_static::lazy_static;
-use std::{
-	collections::HashMap,
-	sync::{Mutex, MutexGuard},
-};
+use std::sync::{Mutex, MutexGuard};
 
+pub mod engine;
+pub mod mappings;
 pub mod to_info;
 pub mod type_info;
-
-#[derive(Debug, Default)]
-pub struct Mappings {
-	named_tys: HashMap<Id, TypeId>,
-	var_tys: HashMap<Id, Spanned<TypeId>>,
-}
-
-#[derive(Default)]
-pub struct Engine {
-	id_counter: TypeId,
-	pub tys: HashMap<TypeId, TypeInfo>,
-}
-
-impl Engine {
-	pub fn add_ty(&mut self, info: TypeInfo) -> TypeId {
-		self.id_counter += 1;
-		self.tys.insert(self.id_counter, info);
-		self.id_counter
-	}
-
-	fn unify_inner(
-		&mut self,
-		a: Spanned<TypeId>,
-		b: Spanned<TypeId>,
-	) -> Result<(), (String, String, String)> {
-		use TypeInfo::*;
-
-		match (self.tys[&a.value].clone(), self.tys[&b.value].clone()) {
-			(a, b) if a == b => Ok(()),
-
-			(SameAs(a), _) => self.unify_inner(a, b),
-			(_, SameAs(b)) => self.unify_inner(a, b),
-
-			(Bottom, _) | (_, Bottom) => Ok(()),
-
-			(Unknown, _) => {
-				self.tys.insert(a.value, TypeInfo::SameAs(b));
-				Ok(())
-			}
-			(_, Unknown) => {
-				self.tys.insert(b.value, TypeInfo::SameAs(a));
-				Ok(())
-			}
-
-			(a, b) => Err({
-				let a = a.display(self);
-				let b = b.display(self);
-				(format!("could not unify {a} and {b}"), a, b)
-			}),
-		}
-	}
-
-	/// Returns `TypeInfo::Bottom` if unification failed, otherwise returns
-	/// `TypeInfo` corresponding to the unified type of both sides. Allows
-	/// changing the name and notes of the error.
-	pub fn unify_custom_error(
-		&mut self,
-		a: Spanned<TypeId>,
-		b: Spanned<TypeId>,
-		title: &str,
-		notes: &[&str],
-	) -> TypeInfo {
-		let unified = self.unify_inner(a, b);
-		if let Err(ref err) = unified {
-			let mut notes: Vec<String> = notes.iter().map(|x| (*x).to_string()).collect();
-			notes.push(err.0.clone());
-			add_diagnostic(
-				Diagnostic::error()
-					.with_message(title)
-					.with_labels(vec![
-						Label::primary(a.span.file_id, a.span.range())
-							.with_message(format!("({})", err.1)),
-						Label::primary(b.span.file_id, b.span.range())
-							.with_message(format!("({})", err.2)),
-					])
-					.with_notes(notes),
-			);
-		}
-		unified.map_or(TypeInfo::Bottom, |_| {
-			self.tys.get(&a.value).unwrap().clone()
-		})
-	}
-
-	/// Returns `TypeInfo::Bottom` if unification failed, otherwise returns
-	/// `TypeInfo` corresponding to the unified type of both sides.
-	pub fn unify(&mut self, a: Spanned<TypeId>, b: Spanned<TypeId>) -> TypeInfo {
-		self.unify_custom_error(a, b, "type conflict", &[])
-	}
-
-	pub fn dump(&self) {
-		for k in self.tys.keys().sorted() {
-			let v = &self.tys[k];
-			println!(
-				"@{k} -> {}",
-				v.display_custom(|x| format!("[@{x} ({})]", self.tys[&x.value].display(self)))
-			);
-		}
-	}
-}
 
 lazy_static! {
 	static ref ENGINE: Mutex<Engine> = Mutex::new(Engine::default());
@@ -140,13 +33,7 @@ impl ToInfo for Spanned<Type> {
 		match &self.value {
 			Type::User(x) => engine()
 				.tys
-				.get(mappings.named_tys.get(&x.id()).unwrap_or_else(|| {
-					panic!(
-						"type {} doesn't exist (options: {:?})",
-						x.id(),
-						mappings.named_tys
-					)
-				}))
+				.get(&mappings.get_named_ty(x.id()).value)
 				.expect("??")
 				.clone()
 				.add_span(self.span),
@@ -162,9 +49,11 @@ impl ToInfo for Spanned<Signature> {
 		// 1. add all generics as UnknownGeneric for later unification/inference
 		let mut generics = Vec::new();
 		for generic in &self.value.generics.value {
-			let ty = engine().add_ty(TypeInfo::UnknownGeneric(generic.value.id()));
-			generics.push(ty.add_span(generic.span));
-			mappings.named_tys.insert(generic.value.id(), ty);
+			let ty = engine()
+				.add_ty(TypeInfo::UnknownGeneric(generic.value.id()))
+				.add_span(generic.span);
+			generics.push(ty);
+			mappings.insert_named_ty(generic.value.id(), ty);
 		}
 		// 2. add all arg types for later unification/inference (NOT the idents)
 		let mut args = Vec::new();
@@ -214,12 +103,7 @@ impl ToInfo for Spanned<HoistedExpr> {
 				.add_span(self.span)
 			}
 			Expr::Identifier(x) => {
-				if let Some(x) = mappings.var_tys.get(&x.id()) {
-					TypeInfo::SameAs(*x).add_span(self.span)
-				} else {
-					println!("we couldn't get {}", x.id());
-					panic!("??")
-				}
+				TypeInfo::SameAs(*mappings.get_var_ty(x.id())).add_span(self.span)
 			}
 			Expr::BinaryOp(lhs, _op, rhs) => {
 				// TODO: allow ops between different tys with custom return tys
@@ -252,11 +136,11 @@ impl ToInfo for Spanned<HoistedScope> {
 				.clone()
 				.add_span(var.span)
 				.convert_and_add(mappings);
-			mappings.var_tys.insert(ident.id(), ty);
+			mappings.insert_var_ty(ident.id(), ty);
 		}
 		for (ident, func) in &self.value.data.funcs {
 			let ty = func.convert_and_add(mappings);
-			mappings.var_tys.insert(ident.id(), ty);
+			mappings.insert_var_ty(ident.id(), ty);
 		}
 		let mut has_yielded_or_returned = false;
 		let mut return_type = TypeInfo::BuiltIn(BuiltIn::Void).add_span(self.span);
@@ -270,19 +154,14 @@ impl ToInfo for Spanned<HoistedScope> {
 					mutable: _,
 					value,
 				} => {
-					let var_ty = *mappings
-						.var_tys
-						.get(&ty_id.ident().id())
-						.unwrap_or_else(|| {
-							panic!("couldn't get {} from {mappings:?}", ty_id.ident().id())
-						});
+					let var_ty = *mappings.get_var_ty(ty_id.ident().id());
 					if let Some(value) = value {
 						let value_ty = value.convert_and_add(mappings);
 						engine().unify(var_ty, value_ty);
 					}
 				}
 				Stmt::Set { id, value } => {
-					let var_ty = *mappings.var_tys.get(&id.value.id()).expect("eugh");
+					let var_ty = *mappings.get_var_ty(id.value.id());
 					let value_ty = value.convert_and_add(mappings);
 					engine().unify(var_ty, value_ty);
 				}
@@ -293,11 +172,11 @@ impl ToInfo for Spanned<HoistedScope> {
 				} => {
 					for generic in &signature.generics.value {
 						let ty = engine().add_ty(TypeInfo::Generic(generic.value.id()));
-						mappings.named_tys.insert(generic.value.id(), ty);
+						mappings.insert_named_ty(generic.value.id(), ty.add_span(generic.span));
 					}
 					for arg in &signature.args.value {
 						let ty = arg.value.ty.convert_and_add(mappings);
-						mappings.var_tys.insert(arg.ident().id(), ty);
+						mappings.insert_var_ty(arg.ident().id(), ty);
 					}
 					let return_ty = signature.return_ty.convert_and_add(mappings);
 					if let Some(inner) = body {

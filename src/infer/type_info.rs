@@ -1,4 +1,4 @@
-use super::Engine;
+use super::engine::Engine;
 use crate::{
 	common::{ident::Id, join::Join, r#type::BuiltIn, span::Spanned},
 	lexer::NumberLiteralType,

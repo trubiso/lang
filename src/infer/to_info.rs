@@ -1,7 +1,6 @@
 use super::{
 	engine,
-	type_info::{TypeId, TypeInfo},
-	Mappings,
+	type_info::{TypeId, TypeInfo}, mappings::Mappings,
 };
 use crate::common::span::{Add, Spanned};
 
