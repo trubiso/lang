@@ -19,20 +19,24 @@ pub enum NumberLiteralKind {
 }
 
 #[derive(Debug, Display, PartialEq, Eq, Clone, Hash)]
-#[display(fmt = "TODO")]
 pub enum NumberLiteralType {
 	/// outer option = has width specified, inner option: None = pointer width,
 	/// Some = specific width
+	#[display(fmt = "({})", r#"match bits {
+		Some(x) => format!("{}{}", if *signed {"i"} else {"u"}, match x {Some(x) => format!("{x}"), None => "size".into()}),
+		None => (if *signed { "int" } else { "uint" }).into()
+	}"#)]
 	Integer {
 		bits: Option<Option<u32>>,
 		signed: bool,
 	},
 	/// option: None = no width specified, Some = width specified
+	#[display(fmt = "(f{})", r#"match bits { Some(x) => format!("{x}"), None => "loat".into() }"#)]
 	Float { bits: Option<u8> },
 }
 
 #[derive(Debug, Display, PartialEq, Eq, Clone, Hash)]
-#[display(fmt = "{value} (TODO: add ty)")]
+#[display(fmt = "{value}{}", r#"match ty { Some(x) => format!("{x}"), None => String::new() }"#)]
 pub struct NumberLiteral {
 	pub value: String,
 	pub kind: NumberLiteralKind,
