@@ -219,6 +219,8 @@ impl Resolve for HoistedScope {
 				.collect(),
 			funcs: data.funcs,
 		};
+		// TODO: ponder why this works
+		new_scope.data.funcs = new_scope.data.funcs.iter().map(|(ident, func)| (ident.clone(), func.resolve(&new_scope.data, &mut mappings))).collect();
 		new_scope
 	}
 }

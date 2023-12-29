@@ -5,12 +5,13 @@ use crate::{
 	common::{
 		expr::Expr,
 		func::FuncSignature,
-		ident::{Id, Ident},
+		ident::Id,
 		r#type::{BuiltInType, Type},
 		span::{Span, Spanned},
 		stmt::Stmt,
 	},
 	hoister::{HoistedExpr, HoistedScope},
+	lexer::NumberLiteralType,
 };
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use lazy_static::lazy_static;
@@ -34,8 +35,29 @@ pub enum TypeInfo {
 	Unknown,
 	SameAs(TypeId),
 	BuiltIn(BuiltInType),
-	FuncSignature(FuncSignature),
+	/// This type is an incomplete number type, i.e. a number that may be any
+	/// signed number, any unsigned number, any float... Fully known number
+	/// types do not pass through `TypeInfo::Number` and instead become
+	/// `TypeInfo::BuiltIn` immediately. If the inner value is `None`, we know
+	/// absolutely nothing about the number type it might be, only that it is,
+	/// in fact, a number.
+	Number(Option<NumberLiteralType>),
+	FuncSignature {
+		return_ty: TypeId,
+		args: Vec<TypeId>,
+		generics: Vec<TypeId>,
+	},
+	/// This type is passed in as a generic to a function/struct/class. It does
+	/// not unify with anything, it simply is a type that we don't know in the
+	/// function/struct/class body that varies depending on who calls it.
 	Generic(Id),
+	/// This type is also passed in as a generic to a function/struct/class.
+	/// Instead of simply accepting that it is unknown, we actually have to
+	/// resolve this one and it does unify with other types. The difference with
+	/// `TypeInfo::Generic` is precisely that this type is used outside of the
+	/// function/struct/class body, whereas `TypeInfo::Generic` is used inside
+	/// of it and thus does not need unification.
+	UnknownGeneric(Id),
 	Bottom,
 }
 
@@ -73,7 +95,7 @@ impl Engine {
 				Ok(())
 			}
 
-			(a, b) => Err(format!("could not unify {:?} and {:?}", a, b))
+			(a, b) => Err(format!("could not unify {:?} and {:?}", a, b)),
 		}
 	}
 
@@ -141,15 +163,59 @@ impl ToInfo for Type {
 }
 
 impl ToInfo for FuncSignature {
-	fn to_info(&self, _mappings: &mut Mappings) -> TypeInfo {
-		TypeInfo::FuncSignature(self.clone())
+	fn to_info(&self, mappings: &mut Mappings) -> TypeInfo {
+		// 1. add all generics as UnknownGeneric for later unification/inference
+		let mut generics = Vec::new();
+		for generic in &self.generics.value {
+			let ty = engine().add_ty(TypeInfo::UnknownGeneric(generic.value.id()));
+			generics.push(ty);
+			mappings.named_tys.insert(generic.value.id(), ty);
+		}
+		// 2. add all arg types for later unification/inference (NOT the idents)
+		let mut args = Vec::new();
+		for arg in &self.args.value {
+			let ty = arg.ty().convert_and_add(mappings);
+			args.push(ty);
+		}
+		// 3. create the return ty once more for later unification/inference
+		let return_ty = self.return_ty.convert_and_add(mappings);
+
+		TypeInfo::FuncSignature {
+			return_ty,
+			args,
+			generics,
+		}
 	}
 }
 
 impl ToInfo for Spanned<HoistedExpr> {
 	fn to_info(&self, mappings: &mut Mappings) -> TypeInfo {
 		match &self.value {
-			Expr::NumberLiteral(_) => todo!("parse number literal into infer info stuff"),
+			Expr::NumberLiteral(x) => {
+				match x.ty.clone() {
+					Some(ty) => {
+						if ty.has_bits() {
+							// convert to BuiltIn
+							TypeInfo::BuiltIn(match ty {
+								NumberLiteralType::Integer { bits, signed } => {
+									// (unwrap is safe because we cleared that it has bits above)
+									BuiltInType::Integer {
+										bits: bits.unwrap(),
+										signed,
+									}
+								}
+								NumberLiteralType::Float { bits } => BuiltInType::Float {
+									// (unwrap is safe because we cleared that it has bits above)
+									bits: bits.unwrap(),
+								},
+							})
+						} else {
+							TypeInfo::Number(Some(ty))
+						}
+					}
+					None => TypeInfo::Number(None),
+				}
+			}
 			Expr::Identifier(x) => match mappings.var_tys.get(&x.id()) {
 				Some(x) => TypeInfo::SameAs(*x),
 				None => {
@@ -169,10 +235,10 @@ impl ToInfo for Spanned<HoistedExpr> {
 			}
 			Expr::Scope(inner) => inner.to_info(mappings),
 			Expr::Call {
-				callee,
-				generics,
-				args,
-			} => TypeInfo::Unknown,
+				callee: _,
+				generics: _,
+				args: _,
+			} => TypeInfo::Unknown, // TODO: function calls
 		}
 	}
 }
@@ -249,7 +315,7 @@ impl ToInfo for HoistedScope {
 }
 
 pub fn infer(scope: &HoistedScope) {
-	// TODO: add all vars and funcs beforehand
 	let mut mappings = Mappings::default();
 	scope.to_info(&mut mappings);
+	dbg!(&engine().tys);
 }

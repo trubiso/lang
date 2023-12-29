@@ -31,12 +31,27 @@ pub enum NumberLiteralType {
 		signed: bool,
 	},
 	/// option: None = no width specified, Some = width specified
-	#[display(fmt = "(f{})", r#"match bits { Some(x) => format!("{x}"), None => "loat".into() }"#)]
+	#[display(
+		fmt = "(f{})",
+		r#"match bits { Some(x) => format!("{x}"), None => "loat".into() }"#
+	)]
 	Float { bits: Option<u8> },
 }
 
+impl NumberLiteralType {
+	pub fn has_bits(&self) -> bool {
+		match self {
+			Self::Integer { bits, signed: _ } => bits.is_some(),
+			Self::Float { bits } => bits.is_some(),
+		}
+	}
+}
+
 #[derive(Debug, Display, PartialEq, Eq, Clone, Hash)]
-#[display(fmt = "{value}{}", r#"match ty { Some(x) => format!("{x}"), None => String::new() }"#)]
+#[display(
+	fmt = "{value}{}",
+	r#"match ty { Some(x) => format!("{x}"), None => String::new() }"#
+)]
 pub struct NumberLiteral {
 	pub value: String,
 	pub kind: NumberLiteralKind,
@@ -48,6 +63,8 @@ fn skip_first(s: &str) -> Option<&str> {
 	s.filter(|x| x.len() > 0)
 }
 
+// TODO: force numbers with . to have NumberLiteralType::Float, and if another
+// type is specified, throw an error
 fn parse_number_literal(lexer: &Lexer<'_, Token>) -> NumberLiteral {
 	let data = lex_to_str(lexer);
 	let re = Regex::new(r"^(?:([0-9][0-9_]*|(?:[0-9][0-9_]*)?\.[0-9][0-9_]*|0b[01][01_]*|0o[0-7][0-7_]*)(i(?:z|[0-9]*)|u(?:z|[0-9]*)?|f(?:16|32|64|128)?)?|(0x[0-9a-fA-F][0-9a-fA-F_]*)(i(?:z|[0-9]*)|u(?:z|[0-9]*)?|p(?:16|32|64|128)?)?)$").unwrap();

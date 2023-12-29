@@ -2,13 +2,13 @@ use super::{join::Join, scope::Scope, span::Spanned};
 use crate::common::{ident::Ident, r#type::Type, typed_ident::TypedIdent};
 use derive_more::Display;
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone)]
 pub struct FuncAttribs {
 	pub is_pure: bool,
 	pub is_unsafe: bool,
 }
 
-#[derive(Debug, Default, Display, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Display, Clone)]
 pub enum FuncLinkage {
 	#[display(fmt = "extern ")]
 	External,
@@ -17,7 +17,7 @@ pub enum FuncLinkage {
 	Default,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct FuncSignature {
 	pub attribs: Spanned<FuncAttribs>,
 	pub linkage: Spanned<FuncLinkage>,

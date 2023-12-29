@@ -21,7 +21,7 @@ void main() {
 	// let glu = fish + cat - dog;
 	// shin = 9;
 	let _ = 10;
-	let _ = 11;
+	// let _ = 11;
 	// let my_var = _ + 3;
 }
 

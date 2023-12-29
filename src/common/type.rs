@@ -20,7 +20,7 @@ use crate::common::{ident::Ident, join::Join, typed_ident::TypedIdent};
 // TODO: we will also have tuples and structs in here at some point
 
 /// A `Type` is the representation of a type in code.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum Type {
 	/// A `Type` created by the user, identified with an Ident.
 	User(Ident),
