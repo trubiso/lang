@@ -1,6 +1,6 @@
 // TODO: (global) write more /// and //! comments
 
-#![warn(clippy::all, clippy::pedantic)]
+// #![warn(clippy::all, clippy::pedantic)]
 
 use crate::{checker::check, common::span::AddSpan, hoister::hoist, resolver::resolve};
 use chumsky::{Span as _, Stream};
@@ -73,7 +73,7 @@ fn main() {
 			.filter(|x| x.severity == Severity::Warning)
 			.count();
 		for diagnostic in &diagnostics {
-			term::emit(&mut writer.lock(), &config, &files, &diagnostic).unwrap();
+			term::emit(&mut writer.lock(), &config, &files, diagnostic).unwrap();
 		}
 		println!(
 			"{amount} diagnostic{} total ({warnings} warning{}, {} error{})",

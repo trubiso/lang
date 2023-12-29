@@ -17,8 +17,8 @@ pub fn add_diagnostic(diagnostic: Diagnostic<usize>) {
 	DIAGNOSTICS.lock().unwrap().push(diagnostic);
 }
 
-pub fn add_diagnostics(mut diagnostics: &mut Vec<Diagnostic<usize>>) {
-	DIAGNOSTICS.lock().unwrap().append(&mut diagnostics);
+pub fn add_diagnostics(diagnostics: &mut Vec<Diagnostic<usize>>) {
+	DIAGNOSTICS.lock().unwrap().append(diagnostics);
 }
 
 pub fn diagnostics_size() -> usize {

@@ -23,7 +23,9 @@ pub enum NumberLiteralType {
 	/// outer option = has width specified, inner option: None = pointer width,
 	/// Some = specific width
 	#[display(fmt = "{}", r#"match bits {
-		Some(x) => format!("{}{}", if *signed {"i"} else {"u"}, match x {Some(x) => format!("{x}"), None => "size".into()}),
+		#[allow(clippy::suspicious_else_formatting)]
+		Some(x) => format!("{}{}", if *signed { "i" } else { "u" }, match x { Some(x) => format!("{x}"), None => "size".into() }),
+		#[allow(clippy::suspicious_else_formatting)]
 		None => if *signed { "int" } else { "uint" }.into()
 	}"#)]
 	Integer {

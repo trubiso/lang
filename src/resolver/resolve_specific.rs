@@ -102,7 +102,7 @@ impl ResolveSpecific for Spanned<Type> {
 	fn resolve_must_exist(&self, _data: &HoistedScopeData, mappings: &mut Mappings) -> Self {
 		match &self.value {
 			Type::User(name) => Type::User(if let Some(id) = mappings.get_by_ident(name) {
-				Ident::Resolved(id.clone())
+				Ident::Resolved(*id)
 			} else {
 				nonexistent_item(self.span.clone(), name);
 				fail_ident()
