@@ -1,10 +1,10 @@
-use super::{add_diagnostic, count};
+use super::count;
 use crate::common::{
+	diagnostics::type_mismatch,
 	ident::{Id, Ident},
 	span::Span,
 };
 use bimap::BiMap;
-use codespan_reporting::diagnostic::{Diagnostic, Label};
 use derive_more::Display;
 use std::collections::HashMap;
 
@@ -76,7 +76,7 @@ impl Mappings {
 		match self.get_repr(&id) {
 			Some(x) => {
 				if x != want {
-					type_mismatch_diagnostic(span, x, want);
+					type_mismatch(span, x, want);
 				}
 			}
 			None => {
@@ -84,13 +84,4 @@ impl Mappings {
 			}
 		}
 	}
-}
-
-fn type_mismatch_diagnostic(span: Span, used: MapRepr, desired: MapRepr) {
-	add_diagnostic(
-		Diagnostic::error()
-			.with_message("type mismatch")
-			.with_labels(vec![Label::primary(span.file_id, span.range())
-				.with_message(format!("used {used} as {desired}"))]),
-	);
 }

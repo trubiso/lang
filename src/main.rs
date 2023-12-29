@@ -2,6 +2,12 @@
 
 #![warn(clippy::all, clippy::pedantic)]
 
+use crate::{
+	checker::check,
+	common::{diagnostics::add_diagnostic, span::AddSpan},
+	hoister::hoist,
+	resolver::resolve,
+};
 use chumsky::{Span as _, Stream};
 use codespan_reporting::{
 	diagnostic::Severity,
@@ -11,11 +17,9 @@ use codespan_reporting::{
 		termcolor::{ColorChoice, StandardStream},
 	},
 };
-use common::span::Span;
+use common::{diagnostics::own_diagnostics, span::Span};
 use parser::types::CodeStream;
 use std::fs;
-
-use crate::{checker::check, hoister::hoist, resolver::resolve, common::span::AddSpan};
 
 // Compilation steps:
 // X - Lexing (into Token)
@@ -49,7 +53,6 @@ fn main() {
 		source_ids.push(file_id);
 	}
 
-	let mut all_diagnostics = Vec::new();
 	let mut have_errors = false;
 
 	for id in source_ids {
@@ -63,7 +66,7 @@ fn main() {
 					if !have_errors && diagnostic.severity == Severity::Error {
 						have_errors = true;
 					}
-					all_diagnostics.push(diagnostic);
+					add_diagnostic(diagnostic);
 				}
 				tokens
 			}
@@ -78,54 +81,32 @@ fn main() {
 					if !have_errors && diagnostic.severity == Severity::Error {
 						have_errors = true;
 					}
-					all_diagnostics.push(diagnostic);
+					add_diagnostic(diagnostic);
 				}
 				scope
 			}
 		};
 
-		all_diagnostics.append(&mut check(&parsed));
-
+		check(&parsed);
 		let hoisted = hoist(&parsed);
-
-		let resolved = match resolve(&hoisted, &hoister::HoistedScopeData::default()) {
-			Ok(scope) => scope,
-			Err((scope, diagnostics)) => {
-				for diagnostic in diagnostics {
-					if !have_errors && diagnostic.severity == Severity::Error {
-						have_errors = true;
-					}
-					all_diagnostics.push(diagnostic);
-				}
-				scope
-			}
-		};
+		let resolved = resolve(&hoisted, &hoister::HoistedScopeData::default());
 
 		println!("{resolved}");
 
-		match infer::infer(&resolved.add_span(Span::new(id, 0..code_len))) {
-			Ok(()) => {}
-			Err(diagnostics) => {
-				for diagnostic in diagnostics {
-					if !have_errors && diagnostic.severity == Severity::Error {
-						have_errors = true;
-					}
-					all_diagnostics.push(diagnostic);
-				}
-			}
-		}
+		infer::infer(&resolved.add_span(Span::new(id, 0..code_len)));
 	}
 
-	if !all_diagnostics.is_empty() {
+	let diagnostics = own_diagnostics();
+	if !diagnostics.is_empty() {
 		// Print errors and/or warnings
 		let writer = StandardStream::stderr(ColorChoice::Always);
 		let config = term::Config::default();
-		let amount = all_diagnostics.len();
-		let warnings = all_diagnostics
+		let amount = diagnostics.len();
+		let warnings = diagnostics
 			.iter()
 			.filter(|x| x.severity == Severity::Warning)
 			.count();
-		for diagnostic in all_diagnostics {
+		for diagnostic in diagnostics {
 			term::emit(&mut writer.lock(), &config, &files, &diagnostic).unwrap();
 		}
 		println!(

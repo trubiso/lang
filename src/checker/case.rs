@@ -1,12 +1,13 @@
-use super::add_diagnostic;
 use crate::{
 	common::ident::Ident,
-	common::span::{Span, Spanned},
+	common::{
+		diagnostics::invalid_case,
+		span::{Span, Spanned},
+	},
 };
-use codespan_reporting::diagnostic::{Diagnostic, Label};
 use derive_more::Display;
 
-#[derive(Display, PartialEq)]
+#[derive(Display, PartialEq, Eq, Clone, Copy)]
 pub enum Case {
 	#[display(fmt = "pascal case")]
 	PascalCase,
@@ -42,7 +43,7 @@ fn begins_with_uppercase(str: &str) -> bool {
 	str.chars().next().unwrap().is_uppercase()
 }
 
-pub fn check_case(span: &Span, name: &str, wanted: &Case) {
+pub fn check_case(span: &Span, name: &str, wanted: Case) {
 	let found = match wanted {
 		Case::PascalCase => {
 			if name.contains('_') {
@@ -87,16 +88,11 @@ pub fn check_case(span: &Span, name: &str, wanted: &Case) {
 		}
 		_ => panic!("why"),
 	};
-	if found != *wanted {
-		add_diagnostic(
-			Diagnostic::warning()
-				.with_message("wrong case system used")
-				.with_labels(vec![Label::primary(span.file_id, span.range())
-					.with_message(format!("expected {wanted}, found {found}",))]),
-		);
+	if found != wanted {
+		invalid_case(span.clone(), wanted, found);
 	}
 }
 
-pub fn check_case_ident(ident: &Spanned<Ident>, wanted: &Case) {
+pub fn check_case_ident(ident: &Spanned<Ident>, wanted: Case) {
 	check_case(&ident.span, &ident.value.to_string(), wanted);
 }

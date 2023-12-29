@@ -1,14 +1,14 @@
-use super::{add_diagnostic, count, mappings::Mappings};
+use super::{count, mappings::Mappings};
 use crate::{
 	common::{
+		diagnostics::{discarded_ident, nonexistent_item},
 		ident::Ident,
 		r#type::Type,
-		span::{AddSpan, Span, Spanned},
+		span::{AddSpan, Spanned},
 		typed_ident::TypedIdent,
 	},
 	hoister::HoistedScopeData,
 };
-use codespan_reporting::diagnostic::{Diagnostic, Label};
 
 pub trait ResolveSpecific {
 	#[must_use]
@@ -65,27 +65,6 @@ fn fail_ident() -> Ident {
 	Ident::Resolved(0)
 }
 
-pub fn nonexistent_item_diagnostic(span: Span, ident: &Ident) {
-	add_diagnostic(
-		Diagnostic::error()
-			.with_message("referenced nonexistent item")
-			.with_labels(vec![Label::primary(span.file_id, span.range())
-				.with_message(format!(
-					"'{ident}' is not defined in the current scope"
-				))]),
-	);
-}
-
-pub fn discarded_ident_diagnostic(span: Span) {
-	add_diagnostic(
-		Diagnostic::error()
-			.with_message("referenced discarded item where value is required")
-			.with_labels(vec![Label::primary(span.file_id, span.range())
-				.with_message("the operation you are trying to perform requires a value, but you passed in a discarded item")
-			])
-	);
-}
-
 impl ResolveSpecific for Spanned<Ident> {
 	fn resolve_make_new(&self, _data: &HoistedScopeData, mappings: &mut Mappings) -> Self {
 		let id = count();
@@ -95,12 +74,12 @@ impl ResolveSpecific for Spanned<Ident> {
 
 	fn resolve_must_exist(&self, _data: &HoistedScopeData, mappings: &mut Mappings) -> Self {
 		if let Ident::Discarded = self.value {
-			discarded_ident_diagnostic(self.span.clone());
+			discarded_ident(self.span.clone());
 			fail_ident()
 		} else if let Some(id) = mappings.get_by_ident(&self.value) {
 			Ident::Resolved(*id)
 		} else {
-			nonexistent_item_diagnostic(self.span.clone(), &self.value);
+			nonexistent_item(self.span.clone(), &self.value);
 			fail_ident()
 		}
 		.add_span(self.span.clone())
@@ -125,7 +104,7 @@ impl ResolveSpecific for Spanned<Type> {
 			Type::User(name) => Type::User(if let Some(id) = mappings.get_by_ident(name) {
 				Ident::Resolved(id.clone())
 			} else {
-				nonexistent_item_diagnostic(self.span.clone(), name);
+				nonexistent_item(self.span.clone(), name);
 				fail_ident()
 			})
 			.add_span(self.span.clone()),

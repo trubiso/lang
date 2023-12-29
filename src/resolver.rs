@@ -16,7 +16,6 @@ use crate::{
 	},
 	hoister::{HoistedExpr, HoistedScope, HoistedScopeData, HoistedStmt},
 };
-use codespan_reporting::diagnostic::Diagnostic;
 use lazy_static::lazy_static;
 use std::{ops::AddAssign, sync::Mutex};
 
@@ -26,12 +25,7 @@ pub mod resolve_data;
 pub mod resolve_specific;
 
 lazy_static! {
-	static ref DIAGNOSTICS: Mutex<Vec<Diagnostic<usize>>> = Mutex::new(vec![]);
 	static ref COUNTER: Mutex<Id> = Mutex::new(0);
-}
-
-fn add_diagnostic(diagnostic: Diagnostic<usize>) {
-	DIAGNOSTICS.lock().unwrap().push(diagnostic);
 }
 
 fn count() -> Id {
@@ -81,11 +75,9 @@ impl Resolve for Spanned<HoistedExpr> {
 					.resolve_must_exist(data, mappings)
 					.value,
 			),
-			Expr::BinaryOp(lhs, op, rhs) => Expr::BinaryOp(
-				lhs.resolve(data, mappings),
-				op,
-				rhs.resolve(data, mappings),
-			),
+			Expr::BinaryOp(lhs, op, rhs) => {
+				Expr::BinaryOp(lhs.resolve(data, mappings), op, rhs.resolve(data, mappings))
+			}
 			Expr::UnaryOp(op, value) => Expr::UnaryOp(op, value.resolve(data, mappings)),
 			Expr::Scope(scope) => Expr::Scope(scope.resolve(data, mappings)),
 			Expr::Call {
@@ -220,20 +212,16 @@ impl Resolve for HoistedScope {
 			funcs: data.funcs,
 		};
 		// TODO: ponder why this works
-		new_scope.data.funcs = new_scope.data.funcs.iter().map(|(ident, func)| (ident.clone(), func.resolve(&new_scope.data, &mut mappings))).collect();
+		new_scope.data.funcs = new_scope
+			.data
+			.funcs
+			.iter()
+			.map(|(ident, func)| (ident.clone(), func.resolve(&new_scope.data, &mut mappings)))
+			.collect();
 		new_scope
 	}
 }
 
-pub fn resolve(
-	scope: &HoistedScope,
-	imported_data: &HoistedScopeData,
-) -> Result<HoistedScope, (HoistedScope, Vec<Diagnostic<usize>>)> {
-	let resolved = scope.resolve(imported_data, &mut Mappings::default());
-	let diagnostics = DIAGNOSTICS.lock().unwrap();
-	if diagnostics.is_empty() {
-		Ok(resolved)
-	} else {
-		Err((resolved, diagnostics.clone()))
-	}
+pub fn resolve(scope: &HoistedScope, imported_data: &HoistedScopeData) -> HoistedScope {
+	scope.resolve(imported_data, &mut Mappings::default())
 }

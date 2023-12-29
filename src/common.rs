@@ -1,5 +1,6 @@
 //! Contains common types that can be used across "passes" of the compilation.
 
+pub mod diagnostics;
 pub mod expr;
 pub mod func;
 pub mod ident;

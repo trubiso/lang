@@ -11,7 +11,7 @@ use crate::{
 		ident::Id,
 		r#type::{BuiltInType, Type},
 		span::{AddSpan, Spanned},
-		stmt::Stmt,
+		stmt::Stmt, diagnostics::add_diagnostic,
 	},
 	hoister::{HoistedExpr, HoistedScope},
 	lexer::NumberLiteralType,
@@ -127,16 +127,11 @@ impl Engine {
 }
 
 lazy_static! {
-	static ref DIAGNOSTICS: Mutex<Vec<Diagnostic<usize>>> = Mutex::new(vec![]);
 	static ref ENGINE: Mutex<Engine> = Mutex::new(Engine::default());
 }
 
 pub fn engine<'a>() -> MutexGuard<'a, Engine> {
 	ENGINE.lock().unwrap()
-}
-
-fn add_diagnostic(diagnostic: Diagnostic<usize>) {
-	DIAGNOSTICS.lock().unwrap().push(diagnostic);
 }
 
 impl ToInfo for Spanned<Type> {
@@ -340,14 +335,8 @@ impl ToInfo for Spanned<HoistedScope> {
 	}
 }
 
-pub fn infer(scope: &Spanned<HoistedScope>) -> Result<(), Vec<Diagnostic<usize>>> {
+pub fn infer(scope: &Spanned<HoistedScope>) {
 	let mut mappings = Mappings::default();
 	scope.to_info(&mut mappings);
 	engine().dump();
-	let diagnostics = DIAGNOSTICS.lock().unwrap();
-	if diagnostics.is_empty() {
-		Ok(())
-	} else {
-		Err(diagnostics.clone())
-	}
 }
