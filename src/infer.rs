@@ -89,7 +89,7 @@ impl Engine {
 		title: &str,
 		notes: &[&str],
 	) -> TypeInfo {
-		let unified = self.unify_inner(a.clone(), b.clone());
+		let unified = self.unify_inner(a, b);
 		if let Err(ref err) = unified {
 			let mut notes: Vec<String> = notes.iter().map(|x| (*x).to_string()).collect();
 			notes.push(err.0.clone());
@@ -215,7 +215,7 @@ impl ToInfo for Spanned<HoistedExpr> {
 			}
 			Expr::Identifier(x) => {
 				if let Some(x) = mappings.var_tys.get(&x.id()) {
-					TypeInfo::SameAs(x.clone()).add_span(self.span)
+					TypeInfo::SameAs(*x).add_span(self.span)
 				} else {
 					println!("we couldn't get {}", x.id());
 					panic!("??")
@@ -270,20 +270,19 @@ impl ToInfo for Spanned<HoistedScope> {
 					mutable: _,
 					value,
 				} => {
-					let var_ty = mappings
+					let var_ty = *mappings
 						.var_tys
 						.get(&ty_id.ident().id())
 						.unwrap_or_else(|| {
 							panic!("couldn't get {} from {mappings:?}", ty_id.ident().id())
-						})
-						.clone();
+						});
 					if let Some(value) = value {
 						let value_ty = value.convert_and_add(mappings);
 						engine().unify(var_ty, value_ty);
 					}
 				}
 				Stmt::Set { id, value } => {
-					let var_ty = mappings.var_tys.get(&id.value.id()).expect("eugh").clone();
+					let var_ty = *mappings.var_tys.get(&id.value.id()).expect("eugh");
 					let value_ty = value.convert_and_add(mappings);
 					engine().unify(var_ty, value_ty);
 				}

@@ -121,8 +121,8 @@ impl Hoist for ParserExpr {
 		match self {
 			Expr::NumberLiteral(x) => Expr::NumberLiteral(x.clone()),
 			Expr::Identifier(x) => Expr::Identifier(x.clone()),
-			Expr::BinaryOp(lhs, op, rhs) => Expr::BinaryOp(lhs.hoist(), op.clone(), rhs.hoist()),
-			Expr::UnaryOp(op, value) => Expr::UnaryOp(op.clone(), value.hoist()),
+			Expr::BinaryOp(lhs, op, rhs) => Expr::BinaryOp(lhs.hoist(), *op, rhs.hoist()),
+			Expr::UnaryOp(op, value) => Expr::UnaryOp(*op, value.hoist()),
 			Expr::Scope(scope) => Expr::Scope(scope.hoist()),
 			Expr::Call {
 				callee,

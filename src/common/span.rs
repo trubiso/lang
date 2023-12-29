@@ -103,6 +103,8 @@ impl<T: std::fmt::Display> std::fmt::Display for Spanned<T> {
 	}
 }
 
+impl<T: Copy> Copy for Spanned<T> {}
+
 impl<T> IntoSpan for SpannedRaw<T> {
 	fn span(&self) -> Span {
 		self.1
