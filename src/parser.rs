@@ -25,6 +25,7 @@ pub fn parser() -> token_parser!(ParserScope) {
 	bare_scope().then_ignore(end())
 }
 
+#[must_use]
 pub fn parse(code_stream: CodeStream) -> ParserScope {
 	let (parsed, errors) = parser().parse_recovery(code_stream);
 	let mut diagnostics = vec![];

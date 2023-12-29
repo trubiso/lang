@@ -1,8 +1,8 @@
 // TODO: (global) write more /// and //! comments
 
-// #![warn(clippy::all, clippy::pedantic)]
+#![warn(clippy::all, clippy::pedantic)]
 
-use crate::{checker::check, common::span::AddSpan, hoister::hoist, resolver::resolve};
+use crate::{checker::check, common::span::Add, hoister::hoist, resolver::resolve};
 use chumsky::{Span as _, Stream};
 use codespan_reporting::{
 	diagnostic::Severity,
@@ -12,7 +12,7 @@ use codespan_reporting::{
 		termcolor::{ColorChoice, StandardStream},
 	},
 };
-use common::{diagnostics::own_diagnostics, span::Span};
+use common::{diagnostics, span::Span};
 use std::fs;
 
 // Compilation steps:
@@ -62,7 +62,7 @@ fn main() {
 		infer::infer(&resolved.add_span(Span::new(id, 0..code_len)));
 	}
 
-	let diagnostics = own_diagnostics();
+	let diagnostics = diagnostics::own();
 	if !diagnostics.is_empty() {
 		// Print errors and/or warnings
 		let writer = StandardStream::stderr(ColorChoice::Always);

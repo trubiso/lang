@@ -17,15 +17,15 @@ pub fn add_diagnostic(diagnostic: Diagnostic<usize>) {
 	DIAGNOSTICS.lock().unwrap().push(diagnostic);
 }
 
+// allow because it contrasts with add_diagnostic as this one is plural and
+// takes in a vec
+#[allow(clippy::module_name_repetitions)]
 pub fn add_diagnostics(diagnostics: &mut Vec<Diagnostic<usize>>) {
 	DIAGNOSTICS.lock().unwrap().append(diagnostics);
 }
 
-pub fn diagnostics_size() -> usize {
-	DIAGNOSTICS.lock().unwrap().len()
-}
-
-pub fn own_diagnostics() -> Vec<Diagnostic<usize>> {
+#[must_use]
+pub fn own() -> Vec<Diagnostic<usize>> {
 	DIAGNOSTICS.lock().unwrap().clone()
 }
 

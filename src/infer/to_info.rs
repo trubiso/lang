@@ -3,7 +3,7 @@ use super::{
 	type_info::{TypeId, TypeInfo},
 	Mappings,
 };
-use crate::common::span::{AddSpan, Spanned};
+use crate::common::span::{Add, Spanned};
 
 pub trait ToInfo {
 	fn to_info(&self, mappings: &mut Mappings) -> Spanned<TypeInfo>;

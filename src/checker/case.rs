@@ -43,7 +43,7 @@ fn begins_with_uppercase(str: &str) -> bool {
 	str.chars().next().unwrap().is_uppercase()
 }
 
-pub fn check_case(span: &Span, name: &str, wanted: Case) {
+pub fn check(span: &Span, name: &str, wanted: Case) {
 	let found = match wanted {
 		Case::PascalCase => {
 			if name.contains('_') {
@@ -93,6 +93,6 @@ pub fn check_case(span: &Span, name: &str, wanted: Case) {
 	}
 }
 
-pub fn check_case_ident(ident: &Spanned<Ident>, wanted: Case) {
-	check_case(&ident.span, &ident.value.to_string(), wanted);
+pub fn check_ident(ident: &Spanned<Ident>, wanted: Case) {
+	check(&ident.span, &ident.value.to_string(), wanted);
 }

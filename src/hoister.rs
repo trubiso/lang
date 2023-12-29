@@ -1,11 +1,11 @@
 use crate::{
 	common::{
 		expr::Expr,
-		func::FuncSignature,
+		func::Signature,
 		ident::Ident,
 		r#type::Type,
 		scope::Scope,
-		span::{AddSpan, Spanned},
+		span::{Add, Spanned},
 		stmt::Stmt,
 	},
 	parser::types::{ParserExpr, ParserScope, ParserStmt},
@@ -22,7 +22,7 @@ pub struct Var {
 #[derive(Default, Debug, Clone)]
 pub struct HoistedScopeData {
 	pub vars: HashMap<Ident, Spanned<Var>>,
-	pub funcs: HashMap<Ident, Spanned<FuncSignature>>,
+	pub funcs: HashMap<Ident, Spanned<Signature>>,
 }
 
 impl std::ops::Add for HoistedScopeData {
@@ -50,7 +50,7 @@ impl HoistedScope {
 		self.data.vars.insert(ident, var);
 	}
 
-	pub fn add_func(&mut self, ident: Ident, func: Spanned<FuncSignature>) {
+	pub fn add_func(&mut self, ident: Ident, func: Spanned<Signature>) {
 		self.data.funcs.insert(ident, func);
 	}
 }

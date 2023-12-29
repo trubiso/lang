@@ -69,10 +69,6 @@ impl chumsky::Span for Span {
 	}
 }
 
-pub trait IntoSpan {
-	fn span(&self) -> Span;
-}
-
 pub type SpannedRaw<T> = (T, Span);
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -91,12 +87,6 @@ impl<T> Spanned<T> {
 	}
 }
 
-impl<T> IntoSpan for Spanned<T> {
-	fn span(&self) -> Span {
-		self.span
-	}
-}
-
 impl<T: std::fmt::Display> std::fmt::Display for Spanned<T> {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		f.write_fmt(format_args!("{}", self.value))
@@ -105,16 +95,10 @@ impl<T: std::fmt::Display> std::fmt::Display for Spanned<T> {
 
 impl<T: Copy> Copy for Spanned<T> {}
 
-impl<T> IntoSpan for SpannedRaw<T> {
-	fn span(&self) -> Span {
-		self.1
-	}
-}
-
-pub trait AddSpan<T>: Sized {
+pub trait Add<T>: Sized {
 	fn add_span(self, span: Span) -> Spanned<Self> {
 		Spanned { value: self, span }
 	}
 }
 
-impl<T> AddSpan<T> for T {}
+impl<T> Add<T> for T {}

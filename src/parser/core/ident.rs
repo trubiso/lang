@@ -1,5 +1,5 @@
 use crate::{
-	common::{ident::Ident, span::AddSpan},
+	common::{ident::Ident, span::Add},
 	lexer::{Keyword, Token},
 };
 use chumsky::prelude::*;
@@ -15,11 +15,11 @@ pub fn ident() -> token_parser!(Ident) {
 	})
 }
 
-pub fn ident_nospan() -> token_parser_no_span!(Ident) {
+pub fn nospan() -> token_parser_no_span!(Ident) {
 	ident().map(|x| x.value)
 }
 
-pub fn ident_nodiscard() -> token_parser!(Ident) {
+pub fn nodiscard() -> token_parser!(Ident) {
 	ident().validate(|ident, span, emit| {
 		if ident.value.is_discarded() {
 			emit(Simple::custom(

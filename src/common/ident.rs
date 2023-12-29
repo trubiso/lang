@@ -1,6 +1,6 @@
 use crate::common::{r#type::Type, typed_ident::TypedIdent};
 
-use super::span::{AddSpan, Spanned};
+use super::span::{Add, Spanned};
 
 // FIXME: PartialEq/Eq will break when you have two ways to call something, eg
 // "::types::Type" vs directly importing "Type"

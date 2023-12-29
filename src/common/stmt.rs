@@ -1,5 +1,5 @@
 use crate::common::{
-	expr::Expr, func::FuncSignature, ident::Ident, scope::Scope, span::Spanned,
+	expr::Expr, func::Signature, ident::Ident, scope::Scope, span::Spanned,
 	typed_ident::TypedIdent,
 };
 
@@ -16,7 +16,7 @@ pub enum Stmt<Sc: Scope> {
 	},
 	Func {
 		id: Spanned<Ident>,
-		signature: FuncSignature,
+		signature: Signature,
 		body: Option<Spanned<Sc>>,
 	},
 	Return {

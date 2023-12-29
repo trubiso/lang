@@ -1,6 +1,6 @@
 use super::Engine;
 use crate::{
-	common::{ident::Id, join::Join, r#type::BuiltInType, span::Spanned},
+	common::{ident::Id, join::Join, r#type::BuiltIn, span::Spanned},
 	lexer::NumberLiteralType,
 };
 
@@ -10,7 +10,7 @@ pub type TypeId = usize;
 pub enum TypeInfo {
 	Unknown,
 	SameAs(Spanned<TypeId>),
-	BuiltIn(BuiltInType),
+	BuiltIn(BuiltIn),
 	/// This type is an incomplete number type, i.e. a number that may be any
 	/// signed number, any unsigned number, any float... Fully known number
 	/// types do not pass through `TypeInfo::Number` and instead become

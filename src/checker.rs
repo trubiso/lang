@@ -1,5 +1,5 @@
 use self::{
-	case::{check_case_ident, Case},
+	case::{check_ident, Case},
 	context::{check_stmt, Context},
 };
 use crate::{common::stmt::Stmt, parser::types::ParserScope};
@@ -17,19 +17,19 @@ fn check_inner(scope: &ParserScope, context: Context) {
 	for stmt in &scope.stmts {
 		check_stmt(stmt, context);
 		match &stmt.value {
-			Stmt::Create { ty_id, .. } => check_case_ident(&ty_id.value.ident, Case::SnakeCase),
+			Stmt::Create { ty_id, .. } => check_ident(&ty_id.value.ident, Case::SnakeCase),
 			Stmt::Set { .. } | Stmt::Return { .. } => {}
 			Stmt::Func {
 				id,
 				signature,
 				body,
 			} => {
-				check_case_ident(id, Case::SnakeCase);
+				check_ident(id, Case::SnakeCase);
 				for generic in &signature.generics.value {
-					check_case_ident(generic, Case::PascalCase);
+					check_ident(generic, Case::PascalCase);
 				}
 				for arg in &signature.args.value {
-					check_case_ident(&arg.value.ident, Case::SnakeCase);
+					check_ident(&arg.value.ident, Case::SnakeCase);
 				}
 				match body {
 					Some(body) => check_inner(&body.value, Context::Func),

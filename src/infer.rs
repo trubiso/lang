@@ -8,10 +8,10 @@ use crate::{
 	common::{
 		diagnostics::add_diagnostic,
 		expr::Expr,
-		func::FuncSignature,
+		func::Signature,
 		ident::Id,
-		r#type::{BuiltInType, Type},
-		span::{AddSpan, Spanned},
+		r#type::{BuiltIn, Type},
+		span::{Add, Spanned},
 		stmt::Stmt,
 	},
 	hoister::{HoistedExpr, HoistedScope},
@@ -157,7 +157,7 @@ impl ToInfo for Spanned<Type> {
 	}
 }
 
-impl ToInfo for Spanned<FuncSignature> {
+impl ToInfo for Spanned<Signature> {
 	fn to_info(&self, mappings: &mut Mappings) -> Spanned<TypeInfo> {
 		// 1. add all generics as UnknownGeneric for later unification/inference
 		let mut generics = Vec::new();
@@ -195,12 +195,12 @@ impl ToInfo for Spanned<HoistedExpr> {
 							TypeInfo::BuiltIn(match ty {
 								NumberLiteralType::Integer { bits, signed } => {
 									// (unwrap is safe because we cleared that it has bits above)
-									BuiltInType::Integer {
+									BuiltIn::Integer {
 										bits: bits.unwrap(),
 										signed,
 									}
 								}
-								NumberLiteralType::Float { bits } => BuiltInType::Float {
+								NumberLiteralType::Float { bits } => BuiltIn::Float {
 									// (unwrap is safe because we cleared that it has bits above)
 									bits: bits.unwrap(),
 								},
@@ -259,7 +259,7 @@ impl ToInfo for Spanned<HoistedScope> {
 			mappings.var_tys.insert(ident.id(), ty);
 		}
 		let mut has_yielded_or_returned = false;
-		let mut return_type = TypeInfo::BuiltIn(BuiltInType::Void).add_span(self.span);
+		let mut return_type = TypeInfo::BuiltIn(BuiltIn::Void).add_span(self.span);
 		for stmt in &self.value.stmts {
 			if has_yielded_or_returned {
 				todo!("warning (unnecessary stmt)");
@@ -315,7 +315,7 @@ impl ToInfo for Spanned<HoistedScope> {
 								"return type was declared to be {} but a value of type {} was returned instead{}",
 								return_ty_ty,
 								actual_return_ty_display,
-								if actual_return_ty == TypeInfo::BuiltIn(BuiltInType::Void) {
+								if actual_return_ty == TypeInfo::BuiltIn(BuiltIn::Void) {
 									" (or no return statement exists)"
 								} else {
 									""

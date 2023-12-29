@@ -1,5 +1,5 @@
 use crate::{
-	common::span::AddSpan,
+	common::span::Add,
 	parser::{
 		core::{expr::expr, ident::ident},
 		types::{ParserExpr, ParserStmt, ScopeRecursive},

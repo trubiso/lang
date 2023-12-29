@@ -7,10 +7,10 @@ use self::{
 use crate::{
 	common::{
 		expr::Expr,
-		func::FuncSignature,
+		func::Signature,
 		ident::{Id, Ident},
 		r#type::Type,
-		span::{AddSpan, Spanned},
+		span::{Add, Spanned},
 		stmt::Stmt,
 		typed_ident::TypedIdent,
 	},
@@ -94,7 +94,7 @@ impl Resolve for Spanned<HoistedExpr> {
 	}
 }
 
-impl Resolve for FuncSignature {
+impl Resolve for Signature {
 	/// WARNING: adds args and generics to Mappings
 	fn resolve(&self, data: &HoistedScopeData, mappings: &mut Mappings) -> Self {
 		let mut resolved_generics = Vec::new();
@@ -222,6 +222,7 @@ impl Resolve for HoistedScope {
 	}
 }
 
+#[must_use]
 pub fn resolve(scope: &HoistedScope, imported_data: &HoistedScopeData) -> HoistedScope {
 	scope.resolve(imported_data, &mut Mappings::default())
 }

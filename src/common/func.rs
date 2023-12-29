@@ -3,13 +3,13 @@ use crate::common::{ident::Ident, r#type::Type, typed_ident::TypedIdent};
 use derive_more::Display;
 
 #[derive(Debug, Default, Clone)]
-pub struct FuncAttribs {
+pub struct Attribs {
 	pub is_pure: bool,
 	pub is_unsafe: bool,
 }
 
 #[derive(Debug, Default, Display, Clone)]
-pub enum FuncLinkage {
+pub enum Linkage {
 	#[display(fmt = "extern ")]
 	External,
 	#[default]
@@ -18,20 +18,20 @@ pub enum FuncLinkage {
 }
 
 #[derive(Debug, Clone)]
-pub struct FuncSignature {
-	pub attribs: Spanned<FuncAttribs>,
-	pub linkage: Spanned<FuncLinkage>,
+pub struct Signature {
+	pub attribs: Spanned<Attribs>,
+	pub linkage: Spanned<Linkage>,
 	pub return_ty: Spanned<Type>,
 	pub args: Spanned<Vec<Spanned<TypedIdent>>>,
 	pub generics: Spanned<Vec<Spanned<Ident>>>,
 }
 
 pub struct Func<Sc: Scope> {
-	pub signature: FuncSignature,
+	pub signature: Signature,
 	pub body: Sc,
 }
 
-impl std::fmt::Display for FuncAttribs {
+impl std::fmt::Display for Attribs {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		if self.is_pure {
 			f.write_str("pure ")?;
@@ -43,7 +43,7 @@ impl std::fmt::Display for FuncAttribs {
 	}
 }
 
-impl std::fmt::Display for FuncSignature {
+impl std::fmt::Display for Signature {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		f.write_fmt(format_args!(
 			"{}{}{}{} -> {}",

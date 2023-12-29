@@ -30,7 +30,7 @@ macro_rules! ident {
 #[macro_export]
 macro_rules! span {
 	($x:expr) => {
-		$x.map_with_span(|x, s| $crate::common::span::AddSpan::add_span(x, s))
+		$x.map_with_span(|x, s| $crate::common::span::Add::add_span(x, s))
 	};
 }
 

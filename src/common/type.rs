@@ -1,4 +1,4 @@
-use super::span::{AddSpan, Spanned};
+use super::span::{Add, Spanned};
 use crate::common::{ident::Ident, join::Join, typed_ident::TypedIdent};
 
 // TODO: figure out Refs and Ptrs, eg:
@@ -25,7 +25,7 @@ pub enum Type {
 	/// A `Type` created by the user, identified with an Ident.
 	User(Ident),
 	/// A `Type` that comes inherently with the language.
-	BuiltIn(BuiltInType),
+	BuiltIn(BuiltIn),
 	/// A `Type` with generics filled in, such as Vec<i32>.
 	Generic(Box<Self>, Vec<Self>),
 	/// A `Type` not specified by the user which the inferring algorithm must
@@ -48,7 +48,7 @@ impl Spanned<Type> {
 
 /// A `BuiltInType` is a kind of `Type` that comes with the language itself.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum BuiltInType {
+pub enum BuiltIn {
 	/// A numeric type represented by i<num> or u<num>, depending on whether
 	/// it's signed or unsigned. This number represents the width of the
 	/// integer, which can range from 1 to 2^23. The type itself can hold any
@@ -67,7 +67,7 @@ pub enum BuiltInType {
 	Void,
 }
 
-impl BuiltInType {
+impl BuiltIn {
 	#[must_use]
 	pub fn is_valid(&self) -> bool {
 		match self {
@@ -89,22 +89,22 @@ impl BuiltInType {
 	}
 
 	#[must_use]
-	pub fn from_name(name: &str) -> Option<BuiltInType> {
+	pub fn from_name(name: &str) -> Option<BuiltIn> {
 		let result = match name {
-			"void" => Some(BuiltInType::Void),
-			"bool" => Some(BuiltInType::Integer {
+			"void" => Some(BuiltIn::Void),
+			"bool" => Some(BuiltIn::Integer {
 				bits: Some(1),
 				signed: false,
 			}),
 			name => match name[1..].parse::<u32>() {
 				Ok(bits) => {
 					if name.starts_with('u') {
-						Some(BuiltInType::Integer {
+						Some(BuiltIn::Integer {
 							bits: Some(bits),
 							signed: false,
 						})
 					} else if name.starts_with('i') {
-						Some(BuiltInType::Integer {
+						Some(BuiltIn::Integer {
 							bits: Some(bits),
 							signed: true,
 						})
@@ -112,7 +112,9 @@ impl BuiltInType {
 						if bits > 128 {
 							None
 						} else {
-							Some(BuiltInType::Float { bits: bits as u8 })
+							// we know bits <= 128 < u8::MAX, so no truncation can happen
+							#[allow(clippy::cast_possible_truncation)]
+							Some(BuiltIn::Float { bits: bits as u8 })
 						}
 					} else {
 						None
@@ -121,12 +123,12 @@ impl BuiltInType {
 				Err(_) => {
 					if name[1..] == *"size" {
 						if name.starts_with('u') {
-							Some(BuiltInType::Integer {
+							Some(BuiltIn::Integer {
 								bits: None,
 								signed: false,
 							})
 						} else if name.starts_with('i') {
-							Some(BuiltInType::Integer {
+							Some(BuiltIn::Integer {
 								bits: None,
 								signed: true,
 							})
@@ -139,7 +141,7 @@ impl BuiltInType {
 				}
 			},
 		};
-		result.filter(BuiltInType::is_valid)
+		result.filter(BuiltIn::is_valid)
 	}
 }
 
@@ -156,7 +158,7 @@ impl std::fmt::Display for Type {
 	}
 }
 
-impl std::fmt::Display for BuiltInType {
+impl std::fmt::Display for BuiltIn {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
 			Self::Integer { bits, signed } => f.write_fmt(format_args!(

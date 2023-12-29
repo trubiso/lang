@@ -1,7 +1,7 @@
-use super::ident::ident_nospan;
+use super::ident;
 use super::ty::ty;
 use crate::common::expr::Expr;
-use crate::common::span::{AddSpan, Span, Spanned};
+use crate::common::span::{Add, Span, Spanned};
 use crate::lexer::Token;
 use crate::parser::types::ScopeRecursive;
 use crate::parser::types::{ExprRecursive, ParserExpr};
@@ -49,7 +49,7 @@ fn atom<'a>(
 		parened!(e),
 		span!(literal_parser!(NumberLiteral)),
 		// TODO: potentially_qualified_ident
-		span!(ident_nospan().map(Expr::Identifier)),
+		span!(ident::nospan().map(Expr::Identifier)),
 		span!(braced!(s).map(Expr::Scope)),
 	))
 }
@@ -115,6 +115,7 @@ fn call<'a>(
 ///   statement, but it would be cool to also allow for `if <expr> { ... } else
 ///   <expr>`)
 /// - for? while? how would these return, being loops
+#[allow(clippy::needless_pass_by_value)] // TODO: someday i'll understand how to make this a ref
 pub fn expr(s: ScopeRecursive) -> token_parser!(ParserExpr : '_) {
 	recursive(|e| {
 		let neg_parser = unop_parser!(Neg => call(e.clone(), s.clone()));

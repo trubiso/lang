@@ -277,6 +277,7 @@ def_token!(
 	}
 );
 
+#[must_use]
 pub fn lex(code: &str, file_id: usize) -> Vec<SpannedRaw<Token>> {
 	let lex = Token::lexer(code).spanned();
 	let tokens = lex
@@ -296,8 +297,7 @@ pub fn lex(code: &str, file_id: usize) -> Vec<SpannedRaw<Token>> {
 	let tokens = tokens
 		.iter()
 		.cloned() // TODO: ewww
-		.filter(|(token, _)| token.is_ok())
-		.map(|(token, range)| (token.unwrap(), range))
+		.filter_map(|(token, range)| token.ok().map(|x| (x, range)))
 		.collect();
 	add_diagnostics(&mut diagnostics);
 	tokens

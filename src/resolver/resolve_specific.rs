@@ -4,7 +4,7 @@ use crate::{
 		diagnostics::{discarded_ident, nonexistent_item},
 		ident::Ident,
 		r#type::Type,
-		span::{AddSpan, Spanned},
+		span::{Add, Spanned},
 		typed_ident::TypedIdent,
 	},
 	hoister::HoistedScopeData,

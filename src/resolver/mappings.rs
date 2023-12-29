@@ -8,7 +8,7 @@ use bimap::BiMap;
 use derive_more::Display;
 use std::collections::HashMap;
 
-#[derive(Clone, Display, PartialEq, Eq)]
+#[derive(Clone, Copy, Display, PartialEq, Eq)]
 pub enum MapRepr {
 	#[display(fmt = "variable")]
 	Var,
@@ -48,7 +48,7 @@ impl Mappings {
 
 	#[must_use]
 	pub fn get_repr(&self, id: &Id) -> Option<MapRepr> {
-		self.reprs.get(id).cloned()
+		self.reprs.get(id).copied()
 	}
 
 	pub fn set_repr(&mut self, id: &Id, repr: MapRepr) {
