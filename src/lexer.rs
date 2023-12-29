@@ -1,4 +1,4 @@
-use crate::common::span::{Span, SpannedRaw};
+use crate::common::{span::{Span, SpannedRaw}, diagnostics::add_diagnostics};
 use chumsky::Span as _;
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use derive_more::Display;
@@ -272,8 +272,7 @@ def_token!(
 	}
 );
 
-type Output = Vec<SpannedRaw<Token>>;
-pub fn lex(code: &str, file_id: usize) -> Result<Output, (Output, Vec<Diagnostic<usize>>)> {
+pub fn lex(code: &str, file_id: usize) -> Vec<SpannedRaw<Token>> {
 	let lex = Token::lexer(code).spanned();
 	let tokens = lex
 		.map(|(token, range)| (token, Span::new(file_id, range)))
@@ -295,9 +294,6 @@ pub fn lex(code: &str, file_id: usize) -> Result<Output, (Output, Vec<Diagnostic
 		.filter(|(token, _)| token.is_ok())
 		.map(|(token, range)| (token.unwrap(), range))
 		.collect();
-	if diagnostics.is_empty() {
-		Ok(tokens)
-	} else {
-		Err((tokens, diagnostics))
-	}
+	add_diagnostics(&mut diagnostics);
+	tokens
 }

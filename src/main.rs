@@ -2,12 +2,7 @@
 
 #![warn(clippy::all, clippy::pedantic)]
 
-use crate::{
-	checker::check,
-	common::{diagnostics::add_diagnostic, span::AddSpan},
-	hoister::hoist,
-	resolver::resolve,
-};
+use crate::{checker::check, common::span::AddSpan, hoister::hoist, resolver::resolve};
 use chumsky::{Span as _, Stream};
 use codespan_reporting::{
 	diagnostic::Severity,
@@ -18,7 +13,6 @@ use codespan_reporting::{
 	},
 };
 use common::{diagnostics::own_diagnostics, span::Span};
-use parser::types::CodeStream;
 use std::fs;
 
 // Compilation steps:
@@ -53,40 +47,12 @@ fn main() {
 		source_ids.push(file_id);
 	}
 
-	let mut have_errors = false;
-
 	for id in source_ids {
 		let file = files.get(id).unwrap();
 		let code_len = file.source().len();
-		let lex_result = lexer::lex(file.source(), id);
-		let tokens = match lex_result {
-			Ok(tokens) => tokens,
-			Err((tokens, diagnostics)) => {
-				for diagnostic in diagnostics {
-					if !have_errors && diagnostic.severity == Severity::Error {
-						have_errors = true;
-					}
-					add_diagnostic(diagnostic);
-				}
-				tokens
-			}
-		};
-		let lexed_iter: CodeStream =
-			Stream::from_iter(Span::new(id, code_len..code_len), tokens.into_iter());
-
-		let parsed = match parser::parse(lexed_iter) {
-			Ok(scope) => scope,
-			Err((scope, diagnostics)) => {
-				for diagnostic in diagnostics {
-					if !have_errors && diagnostic.severity == Severity::Error {
-						have_errors = true;
-					}
-					add_diagnostic(diagnostic);
-				}
-				scope
-			}
-		};
-
+		let tokens = lexer::lex(file.source(), id);
+		let lex_iter = Stream::from_iter(Span::new(id, code_len..code_len), tokens.into_iter());
+		let parsed = parser::parse(lex_iter);
 		check(&parsed);
 		let hoisted = hoist(&parsed);
 		let resolved = resolve(&hoisted, &hoister::HoistedScopeData::default());
@@ -106,7 +72,7 @@ fn main() {
 			.iter()
 			.filter(|x| x.severity == Severity::Warning)
 			.count();
-		for diagnostic in diagnostics {
+		for diagnostic in &diagnostics {
 			term::emit(&mut writer.lock(), &config, &files, &diagnostic).unwrap();
 		}
 		println!(
@@ -117,7 +83,7 @@ fn main() {
 			if amount - warnings == 1 { "" } else { "s" },
 		);
 
-		if have_errors {
+		if diagnostics.iter().any(|x| x.severity == Severity::Error) {
 			println!("one or more errors present, cannot compile :(");
 		}
 	}

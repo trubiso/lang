@@ -2,6 +2,7 @@ use self::{
 	stmt::stmt,
 	types::{CodeStream, ParserScope},
 };
+use crate::common::diagnostics::add_diagnostics;
 use chumsky::{error::SimpleReason, prelude::*};
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 
@@ -24,13 +25,11 @@ pub fn parser() -> token_parser!(ParserScope) {
 	bare_scope().then_ignore(end())
 }
 
-pub fn parse(
-	code_stream: CodeStream,
-) -> Result<ParserScope, (ParserScope, Vec<Diagnostic<usize>>)> {
+pub fn parse(code_stream: CodeStream) -> ParserScope {
 	let (parsed, errors) = parser().parse_recovery(code_stream);
 	let mut diagnostics = vec![];
 	if errors.is_empty() {
-		return Ok(parsed.expect("what").value);
+		return parsed.expect("what").value;
 	}
 	// try not to duplicate diagnostics challenge
 	let mut add_diagnostic = |diagnostic: Diagnostic<_>| {
@@ -70,8 +69,6 @@ pub fn parse(
 			),
 		}
 	}
-	Err((
-		parsed.map_or_else(|| ParserScope { stmts: Vec::new() }, |x| x.value),
-		diagnostics,
-	))
+	add_diagnostics(&mut diagnostics);
+	parsed.map_or_else(|| ParserScope { stmts: Vec::new() }, |x| x.value)
 }
