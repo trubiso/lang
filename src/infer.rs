@@ -1,6 +1,9 @@
 // sincere thanks to https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=174ca95a8b938168764846e97d5e9a2c
 
-use self::to_info::ToInfo;
+use self::{
+	to_info::ToInfo,
+	type_info::{TypeId, TypeInfo},
+};
 use crate::{
 	common::{
 		expr::Expr,
@@ -14,6 +17,7 @@ use crate::{
 	lexer::NumberLiteralType,
 };
 use codespan_reporting::diagnostic::{Diagnostic, Label};
+use itertools::Itertools;
 use lazy_static::lazy_static;
 use std::{
 	collections::HashMap,
@@ -21,44 +25,12 @@ use std::{
 };
 
 pub mod to_info;
+pub mod type_info;
 
 #[derive(Debug, Default)]
 pub struct Mappings {
 	named_tys: HashMap<Id, TypeId>,
 	var_tys: HashMap<Id, TypeId>,
-}
-
-pub type TypeId = usize;
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum TypeInfo {
-	Unknown,
-	SameAs(TypeId),
-	BuiltIn(BuiltInType),
-	/// This type is an incomplete number type, i.e. a number that may be any
-	/// signed number, any unsigned number, any float... Fully known number
-	/// types do not pass through `TypeInfo::Number` and instead become
-	/// `TypeInfo::BuiltIn` immediately. If the inner value is `None`, we know
-	/// absolutely nothing about the number type it might be, only that it is,
-	/// in fact, a number.
-	Number(Option<NumberLiteralType>),
-	FuncSignature {
-		return_ty: TypeId,
-		args: Vec<TypeId>,
-		generics: Vec<TypeId>,
-	},
-	/// This type is passed in as a generic to a function/struct/class. It does
-	/// not unify with anything, it simply is a type that we don't know in the
-	/// function/struct/class body that varies depending on who calls it.
-	Generic(Id),
-	/// This type is also passed in as a generic to a function/struct/class.
-	/// Instead of simply accepting that it is unknown, we actually have to
-	/// resolve this one and it does unify with other types. The difference with
-	/// `TypeInfo::Generic` is precisely that this type is used outside of the
-	/// function/struct/class body, whereas `TypeInfo::Generic` is used inside
-	/// of it and thus does not need unification.
-	UnknownGeneric(Id),
-	Bottom,
 }
 
 #[derive(Default)]
@@ -95,7 +67,11 @@ impl Engine {
 				Ok(())
 			}
 
-			(a, b) => Err(format!("could not unify {:?} and {:?}", a, b)),
+			(a, b) => Err(format!(
+				"could not unify {} and {}",
+				a.display(self),
+				b.display(self)
+			)),
 		}
 	}
 
@@ -127,6 +103,16 @@ impl Engine {
 	/// TypeInfo corresponding to the unified type of both sides.
 	pub fn unify(&mut self, a: TypeId, b: TypeId, span: Span) -> TypeInfo {
 		self.unify_custom_error(a, b, span, "type conflict".into(), vec![])
+	}
+
+	pub fn dump(&self) {
+		for k in self.tys.keys().sorted() {
+			let v = &self.tys[k];
+			println!(
+				"@{k} -> {}",
+				v.display_custom(|x| format!("[@{x} ({})]", self.tys[x].display(self)))
+			);
+		}
 	}
 }
 
@@ -314,8 +300,14 @@ impl ToInfo for HoistedScope {
 	}
 }
 
-pub fn infer(scope: &HoistedScope) {
+pub fn infer(scope: &HoistedScope) -> Result<(), Vec<Diagnostic<usize>>> {
 	let mut mappings = Mappings::default();
 	scope.to_info(&mut mappings);
-	dbg!(&engine().tys);
+	engine().dump();
+	let diagnostics = DIAGNOSTICS.lock().unwrap();
+	if diagnostics.is_empty() {
+		Ok(())
+	} else {
+		Err(diagnostics.clone())
+	}
 }

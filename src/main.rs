@@ -103,7 +103,17 @@ fn main() {
 
 		println!("{}", resolved);
 
-		infer::infer(&resolved);
+		match infer::infer(&resolved) {
+			Ok(()) => {}
+			Err(diagnostics) => {
+				for diagnostic in diagnostics {
+					if !have_errors && diagnostic.severity == Severity::Error {
+						have_errors = true;
+					}
+					all_diagnostics.push(diagnostic);
+				}
+			}
+		}
 	}
 
 	if !all_diagnostics.is_empty() {

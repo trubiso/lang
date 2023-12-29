@@ -22,7 +22,7 @@ pub enum NumberLiteralKind {
 pub enum NumberLiteralType {
 	/// outer option = has width specified, inner option: None = pointer width,
 	/// Some = specific width
-	#[display(fmt = "({})", r#"match bits {
+	#[display(fmt = "{}", r#"match bits {
 		Some(x) => format!("{}{}", if *signed {"i"} else {"u"}, match x {Some(x) => format!("{x}"), None => "size".into()}),
 		None => (if *signed { "int" } else { "uint" }).into()
 	}"#)]
@@ -32,7 +32,7 @@ pub enum NumberLiteralType {
 	},
 	/// option: None = no width specified, Some = width specified
 	#[display(
-		fmt = "(f{})",
+		fmt = "f{}",
 		r#"match bits { Some(x) => format!("{x}"), None => "loat".into() }"#
 	)]
 	Float { bits: Option<u8> },
@@ -50,7 +50,7 @@ impl NumberLiteralType {
 #[derive(Debug, Display, PartialEq, Eq, Clone, Hash)]
 #[display(
 	fmt = "{value}{}",
-	r#"match ty { Some(x) => format!("{x}"), None => String::new() }"#
+	r#"match ty { Some(x) => format!("({x})"), None => String::new() }"#
 )]
 pub struct NumberLiteral {
 	pub value: String,

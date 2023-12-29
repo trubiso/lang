@@ -1,4 +1,8 @@
-use super::{engine, Mappings, TypeId, TypeInfo};
+use super::{
+	engine,
+	type_info::{TypeId, TypeInfo},
+	Mappings,
+};
 use crate::common::span::Spanned;
 
 pub trait ToInfo {
