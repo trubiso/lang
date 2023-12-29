@@ -15,7 +15,7 @@ use common::span::Span;
 use parser::types::CodeStream;
 use std::fs;
 
-use crate::{checker::check, hoister::hoist, resolver::resolve};
+use crate::{checker::check, hoister::hoist, resolver::resolve, common::span::AddSpan};
 
 // Compilation steps:
 // X - Lexing (into Token)
@@ -103,7 +103,7 @@ fn main() {
 
 		println!("{}", resolved);
 
-		match infer::infer(&resolved) {
+		match infer::infer(&resolved.add_span(Span::new(id, 0..code_len))) {
 			Ok(()) => {}
 			Err(diagnostics) => {
 				for diagnostic in diagnostics {

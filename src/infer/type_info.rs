@@ -1,6 +1,6 @@
 use super::Engine;
 use crate::{
-	common::{ident::Id, join::Join, r#type::BuiltInType},
+	common::{ident::Id, join::Join, r#type::BuiltInType, span::Spanned},
 	lexer::NumberLiteralType,
 };
 
@@ -9,7 +9,7 @@ pub type TypeId = usize;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TypeInfo {
 	Unknown,
-	SameAs(TypeId),
+	SameAs(Spanned<TypeId>),
 	BuiltIn(BuiltInType),
 	/// This type is an incomplete number type, i.e. a number that may be any
 	/// signed number, any unsigned number, any float... Fully known number
@@ -19,9 +19,9 @@ pub enum TypeInfo {
 	/// in fact, a number.
 	Number(Option<NumberLiteralType>),
 	FuncSignature {
-		return_ty: TypeId,
-		args: Vec<TypeId>,
-		generics: Vec<TypeId>,
+		return_ty: Spanned<TypeId>,
+		args: Vec<Spanned<TypeId>>,
+		generics: Vec<Spanned<TypeId>>,
 	},
 	/// This type is passed in as a generic to a function/struct/class. It does
 	/// not unify with anything, it simply is a type that we don't know in the
@@ -38,7 +38,7 @@ pub enum TypeInfo {
 }
 
 impl TypeInfo {
-	pub fn display_custom(&self, follow_ref: impl Fn(&usize) -> String + Clone) -> String {
+	pub fn display_custom(&self, follow_ref: impl Fn(&Spanned<usize>) -> String + Clone) -> String {
 		match self {
 			TypeInfo::Unknown => "?".into(),
 			TypeInfo::SameAs(x) => follow_ref(x),
@@ -69,6 +69,6 @@ impl TypeInfo {
 	}
 
 	pub fn display(&self, engine: &Engine) -> String {
-		self.display_custom(|id| engine.tys[id].display(engine))
+		self.display_custom(|id| engine.tys[&id.value].display(engine))
 	}
 }

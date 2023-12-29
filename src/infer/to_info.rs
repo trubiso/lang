@@ -3,13 +3,13 @@ use super::{
 	type_info::{TypeId, TypeInfo},
 	Mappings,
 };
-use crate::common::span::Spanned;
+use crate::common::span::{Spanned, AddSpan};
 
 pub trait ToInfo {
-	fn to_info(&self, mappings: &mut Mappings) -> TypeInfo;
-	fn convert_and_add(&self, mappings: &mut Mappings) -> TypeId {
+	fn to_info(&self, mappings: &mut Mappings) -> Spanned<TypeInfo>;
+	fn convert_and_add(&self, mappings: &mut Mappings) -> Spanned<TypeId> {
 		let info = self.to_info(mappings);
-		engine().add_ty(info)
+		engine().add_ty(info.value).add_span(info.span)
 	}
 }
 
@@ -17,13 +17,13 @@ pub trait ToInfo {
 // spanned objects, we should perhaps have a common trait for these kinds of
 // containers
 impl<T: ToInfo> ToInfo for Spanned<T> {
-	fn to_info(&self, mappings: &mut Mappings) -> TypeInfo {
+	fn to_info(&self, mappings: &mut Mappings) -> Spanned<TypeInfo> {
 		self.map_ref(|x| x.to_info(mappings)).value
 	}
 }
 
 impl<T: ToInfo> ToInfo for Box<T> {
-	fn to_info(&self, mappings: &mut Mappings) -> TypeInfo {
+	fn to_info(&self, mappings: &mut Mappings) -> Spanned<TypeInfo> {
 		self.as_ref().to_info(mappings)
 	}
 }
