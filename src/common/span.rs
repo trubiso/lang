@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct Span {
 	pub file_id: usize,
 	pub start: usize,
@@ -87,13 +87,13 @@ impl<T> Spanned<T> {
 	}
 
 	pub fn map_ref<U>(&self, func: impl FnOnce(&T) -> U) -> Spanned<U> {
-		func(&self.value).add_span(self.span.clone())
+		func(&self.value).add_span(self.span)
 	}
 }
 
 impl<T> IntoSpan for Spanned<T> {
 	fn span(&self) -> Span {
-		self.span.clone()
+		self.span
 	}
 }
 
@@ -105,7 +105,7 @@ impl<T: std::fmt::Display> std::fmt::Display for Spanned<T> {
 
 impl<T> IntoSpan for SpannedRaw<T> {
 	fn span(&self) -> Span {
-		self.1.clone()
+		self.1
 	}
 }
 

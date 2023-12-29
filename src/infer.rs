@@ -6,12 +6,13 @@ use self::{
 };
 use crate::{
 	common::{
+		diagnostics::add_diagnostic,
 		expr::Expr,
 		func::FuncSignature,
 		ident::Id,
 		r#type::{BuiltInType, Type},
 		span::{AddSpan, Spanned},
-		stmt::Stmt, diagnostics::add_diagnostic,
+		stmt::Stmt,
 	},
 	hoister::{HoistedExpr, HoistedScope},
 	lexer::NumberLiteralType,
@@ -148,10 +149,10 @@ impl ToInfo for Spanned<Type> {
 				}))
 				.expect("??")
 				.clone()
-				.add_span(self.span.clone()),
-			Type::BuiltIn(x) => TypeInfo::BuiltIn(x.clone()).add_span(self.span.clone()),
+				.add_span(self.span),
+			Type::BuiltIn(x) => TypeInfo::BuiltIn(x.clone()).add_span(self.span),
 			Type::Generic(..) => todo!("(generic type parsing is not even implemented yet)"),
-			Type::Inferred => TypeInfo::Unknown.add_span(self.span.clone()),
+			Type::Inferred => TypeInfo::Unknown.add_span(self.span),
 		}
 	}
 }
@@ -162,7 +163,7 @@ impl ToInfo for Spanned<FuncSignature> {
 		let mut generics = Vec::new();
 		for generic in &self.value.generics.value {
 			let ty = engine().add_ty(TypeInfo::UnknownGeneric(generic.value.id()));
-			generics.push(ty.add_span(generic.span.clone()));
+			generics.push(ty.add_span(generic.span));
 			mappings.named_tys.insert(generic.value.id(), ty);
 		}
 		// 2. add all arg types for later unification/inference (NOT the idents)
@@ -179,7 +180,7 @@ impl ToInfo for Spanned<FuncSignature> {
 			args,
 			generics,
 		}
-		.add_span(self.span.clone())
+		.add_span(self.span)
 	}
 }
 
@@ -210,11 +211,11 @@ impl ToInfo for Spanned<HoistedExpr> {
 					}
 					None => TypeInfo::Number(None),
 				}
-				.add_span(self.span.clone())
+				.add_span(self.span)
 			}
 			Expr::Identifier(x) => {
 				if let Some(x) = mappings.var_tys.get(&x.id()) {
-					TypeInfo::SameAs(x.clone()).add_span(self.span.clone())
+					TypeInfo::SameAs(x.clone()).add_span(self.span)
 				} else {
 					println!("we couldn't get {}", x.id());
 					panic!("??")
@@ -224,19 +225,19 @@ impl ToInfo for Spanned<HoistedExpr> {
 				// TODO: allow ops between different tys with custom return tys
 				let lhs = lhs.convert_and_add(mappings);
 				let rhs = rhs.convert_and_add(mappings);
-				engine().unify(lhs, rhs).add_span(self.span.clone())
+				engine().unify(lhs, rhs).add_span(self.span)
 			}
 			Expr::UnaryOp(_op, value) => {
 				// TODO: allow ops to have custom return tys
 				value.to_info(mappings)
 			}
 			// FIXME: why do we need this clone???
-			Expr::Scope(inner) => inner.clone().add_span(self.span.clone()).to_info(mappings),
+			Expr::Scope(inner) => inner.clone().add_span(self.span).to_info(mappings),
 			Expr::Call {
 				callee: _,
 				generics: _,
 				args: _,
-			} => TypeInfo::Unknown.add_span(self.span.clone()), // TODO: function calls
+			} => TypeInfo::Unknown.add_span(self.span), // TODO: function calls
 		}
 	}
 }
@@ -249,7 +250,7 @@ impl ToInfo for Spanned<HoistedScope> {
 				.value
 				.ty
 				.clone()
-				.add_span(var.span.clone())
+				.add_span(var.span)
 				.convert_and_add(mappings);
 			mappings.var_tys.insert(ident.id(), ty);
 		}
@@ -258,7 +259,7 @@ impl ToInfo for Spanned<HoistedScope> {
 			mappings.var_tys.insert(ident.id(), ty);
 		}
 		let mut has_yielded_or_returned = false;
-		let mut return_type = TypeInfo::BuiltIn(BuiltInType::Void).add_span(self.span.clone());
+		let mut return_type = TypeInfo::BuiltIn(BuiltInType::Void).add_span(self.span);
 		for stmt in &self.value.stmts {
 			if has_yielded_or_returned {
 				todo!("warning (unnecessary stmt)");

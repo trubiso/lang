@@ -36,7 +36,7 @@ pub enum Type {
 impl Spanned<Type> {
 	#[must_use]
 	pub fn add_discarded_ident(self) -> TypedIdent {
-		let span = self.span.clone();
+		let span = self.span;
 		TypedIdent {
 			ty: self,
 			ident: Ident::Discarded.add_span(span),

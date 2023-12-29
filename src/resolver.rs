@@ -48,8 +48,8 @@ impl Resolve for Spanned<Type> {
 		match self.value.clone() {
 			Type::User(name) => {
 				let id = name.resolve(data, mappings).id();
-				mappings.ensure_repr(id, MapRepr::Type, self.span.clone());
-				Type::User(Ident::Resolved(id)).add_span(self.span.clone())
+				mappings.ensure_repr(id, MapRepr::Type, self.span);
+				Type::User(Ident::Resolved(id)).add_span(self.span)
 			}
 			Type::Generic(..) => todo!("(generic type parsing is not even implemented yet)"),
 			Type::BuiltIn(..) | Type::Inferred => self.clone(),
@@ -71,7 +71,7 @@ impl Resolve for Spanned<HoistedExpr> {
 		match self.value.clone() {
 			Expr::NumberLiteral(x) => Expr::NumberLiteral(x),
 			Expr::Identifier(x) => Expr::Identifier(
-				x.add_span(self.span.clone())
+				x.add_span(self.span)
 					.resolve_must_exist(data, mappings)
 					.value,
 			),
@@ -90,7 +90,7 @@ impl Resolve for Spanned<HoistedExpr> {
 				args: args.resolve(data, mappings),
 			},
 		}
-		.add_span(self.span.clone())
+		.add_span(self.span)
 	}
 }
 
@@ -101,7 +101,7 @@ impl Resolve for FuncSignature {
 		for generic in &self.generics.value {
 			let id = count();
 			mappings.insert_ty(id, generic.value.clone());
-			resolved_generics.push(Ident::Resolved(id).add_span(generic.span.clone()));
+			resolved_generics.push(Ident::Resolved(id).add_span(generic.span));
 		}
 		let mut resolved_args = Vec::new();
 		for arg in &self.args.value {
@@ -115,13 +115,13 @@ impl Resolve for FuncSignature {
 			resolved_args.push(
 				TypedIdent {
 					ty: arg.value.ty.resolve(data, mappings),
-					ident: new_ident.add_span(arg.value.ident.span.clone()),
+					ident: new_ident.add_span(arg.value.ident.span),
 				}
-				.add_span(arg.span.clone()),
+				.add_span(arg.span),
 			);
 		}
-		let resolved_generics = resolved_generics.add_span(self.generics.span.clone());
-		let resolved_args = resolved_args.add_span(self.args.span.clone());
+		let resolved_generics = resolved_generics.add_span(self.generics.span);
+		let resolved_args = resolved_args.add_span(self.args.span);
 		Self {
 			attribs: self.attribs.clone(),
 			linkage: self.linkage.clone(),
@@ -141,7 +141,7 @@ impl Resolve for HoistedStmt {
 				value,
 			} => {
 				let ty_id = ty_id.resolve_make_new(data, mappings);
-				mappings.ensure_repr(ty_id.ident().id(), MapRepr::Var, ty_id.span.clone());
+				mappings.ensure_repr(ty_id.ident().id(), MapRepr::Var, ty_id.span);
 				Self::Create {
 					ty_id,
 					mutable: *mutable,
@@ -163,7 +163,7 @@ impl Resolve for HoistedStmt {
 			} => {
 				// the id will have been created for us already, no need for must exist
 				let id = id.resolve(data, mappings);
-				mappings.ensure_repr(id.value.id(), MapRepr::Func, id.span.clone());
+				mappings.ensure_repr(id.value.id(), MapRepr::Func, id.span);
 				let mut mappings = mappings.clone();
 				Self::Func {
 					id,

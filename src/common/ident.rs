@@ -56,9 +56,9 @@ impl Ident {
 impl Spanned<Ident> {
 	#[must_use]
 	pub fn infer_type(self) -> Spanned<TypedIdent> {
-		let span = self.span.clone();
+		let span = self.span;
 		TypedIdent {
-			ty: Type::Inferred.add_span(span.clone()),
+			ty: Type::Inferred.add_span(span),
 			ident: self,
 		}
 		.add_span(span)

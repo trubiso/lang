@@ -78,7 +78,7 @@ fn func_body(s: ScopeRecursive) -> token_parser!(ParserScope : '_) {
 						value: expr,
 						is_yield: false,
 					}
-					.add_span(span.clone())],
+					.add_span(span)],
 				}
 				.add_span(span)
 			}),

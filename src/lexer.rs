@@ -1,4 +1,7 @@
-use crate::common::{span::{Span, SpannedRaw}, diagnostics::add_diagnostics};
+use crate::common::{
+	diagnostics::add_diagnostics,
+	span::{Span, SpannedRaw},
+};
 use chumsky::Span as _;
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use derive_more::Display;

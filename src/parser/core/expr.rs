@@ -61,8 +61,8 @@ fn call<'a>(
 	atom(e.clone(), s)
 		.then(angled!(ty(),).or_not().then(parened!(e,)).repeated())
 		.foldl(|lhs, (generics, args)| {
-			let lhs_span = lhs.span.clone();
-			let last_span = args.last().map_or(lhs_span.clone(), |x| x.span.clone());
+			let lhs_span = lhs.span;
+			let last_span = args.last().map_or(lhs_span, |x| x.span);
 			Expr::Call {
 				callee: Box::new(lhs),
 				generics,

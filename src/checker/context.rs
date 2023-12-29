@@ -1,4 +1,7 @@
-use crate::{common::{span::Spanned, diagnostics::invalid_stmt}, parser::types::ParserStmt};
+use crate::{
+	common::{diagnostics::invalid_stmt, span::Spanned},
+	parser::types::ParserStmt,
+};
 use derive_more::Display;
 
 #[derive(Debug, Display, Clone, Copy, PartialEq, Eq)]

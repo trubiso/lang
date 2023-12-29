@@ -89,7 +89,7 @@ pub fn check_case(span: &Span, name: &str, wanted: Case) {
 		_ => panic!("why"),
 	};
 	if found != wanted {
-		invalid_case(span.clone(), wanted, found);
+		invalid_case(*span, wanted, found);
 	}
 }
 

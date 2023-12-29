@@ -69,20 +69,20 @@ impl ResolveSpecific for Spanned<Ident> {
 	fn resolve_make_new(&self, _data: &HoistedScopeData, mappings: &mut Mappings) -> Self {
 		let id = count();
 		mappings.insert_var(id, self.value.clone());
-		Ident::Resolved(id).add_span(self.span.clone())
+		Ident::Resolved(id).add_span(self.span)
 	}
 
 	fn resolve_must_exist(&self, _data: &HoistedScopeData, mappings: &mut Mappings) -> Self {
 		if let Ident::Discarded = self.value {
-			discarded_ident(self.span.clone());
+			discarded_ident(self.span);
 			fail_ident()
 		} else if let Some(id) = mappings.get_by_ident(&self.value) {
 			Ident::Resolved(*id)
 		} else {
-			nonexistent_item(self.span.clone(), &self.value);
+			nonexistent_item(self.span, &self.value);
 			fail_ident()
 		}
-		.add_span(self.span.clone())
+		.add_span(self.span)
 	}
 }
 
@@ -92,7 +92,7 @@ impl ResolveSpecific for Spanned<Type> {
 			Type::User(name) => {
 				let id = count();
 				mappings.insert_ty(id, name.clone());
-				Type::User(Ident::Resolved(id)).add_span(self.span.clone())
+				Type::User(Ident::Resolved(id)).add_span(self.span)
 			}
 			Type::Generic(..) => todo!("(generic type parsing is not even implemented yet)"),
 			Type::BuiltIn(..) | Type::Inferred => self.clone(),
@@ -104,10 +104,10 @@ impl ResolveSpecific for Spanned<Type> {
 			Type::User(name) => Type::User(if let Some(id) = mappings.get_by_ident(name) {
 				Ident::Resolved(*id)
 			} else {
-				nonexistent_item(self.span.clone(), name);
+				nonexistent_item(self.span, name);
 				fail_ident()
 			})
-			.add_span(self.span.clone()),
+			.add_span(self.span),
 			Type::Generic(..) => todo!("(generic type parsing is not even implemented yet)"),
 			Type::BuiltIn(..) | Type::Inferred => self.clone(),
 		}

@@ -149,7 +149,7 @@ impl HoistWithScope for Spanned<ParserStmt> {
 			} => {
 				let ident = ty_id.ident().clone();
 				let ty = ty_id.ty().clone();
-				scope.add_var(ident, Var { ty, mutable }.add_span(self.span.clone()));
+				scope.add_var(ident, Var { ty, mutable }.add_span(self.span));
 				Stmt::Create {
 					ty_id,
 					mutable,
@@ -165,10 +165,7 @@ impl HoistWithScope for Spanned<ParserStmt> {
 				signature,
 				body,
 			} => {
-				scope.add_func(
-					id.value.clone(),
-					signature.clone().add_span(self.span.clone()),
-				);
+				scope.add_func(id.value.clone(), signature.clone().add_span(self.span));
 				Stmt::Func {
 					id,
 					signature,

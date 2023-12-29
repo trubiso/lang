@@ -1,5 +1,8 @@
 use super::{join::Join, r#type::Type, scope::Scope, span::Spanned};
-use crate::{common::ident::Ident, lexer::{Operator, NumberLiteral}};
+use crate::{
+	common::ident::Ident,
+	lexer::{NumberLiteral, Operator},
+};
 
 // TODO: dot access (a.b), deref, ref, construct (Struct {a: 3, b: 5}), array
 // literal?, tuple??
