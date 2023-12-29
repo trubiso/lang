@@ -83,11 +83,12 @@ impl Engine {
 		a: TypeId,
 		b: TypeId,
 		span: Span,
-		title: String,
-		mut notes: Vec<String>,
+		title: &str,
+		notes: Vec<&str>,
 	) -> TypeInfo {
 		let unified = self.unify_inner(a, b);
 		if let Err(ref err) = unified {
+			let mut notes: Vec<String> = notes.iter().map(|x| x.to_string()).collect();
 			notes.push(err.clone());
 			add_diagnostic(
 				Diagnostic::error()
@@ -102,7 +103,7 @@ impl Engine {
 	/// Returns TypeInfo::Bottom if unification failed, otherwise returns
 	/// TypeInfo corresponding to the unified type of both sides.
 	pub fn unify(&mut self, a: TypeId, b: TypeId, span: Span) -> TypeInfo {
-		self.unify_custom_error(a, b, span, "type conflict".into(), vec![])
+		self.unify_custom_error(a, b, span, "type conflict", vec![])
 	}
 
 	pub fn dump(&self) {
@@ -271,7 +272,7 @@ impl ToInfo for HoistedScope {
 					engine().unify(var_ty, value_ty, stmt.span.clone());
 				}
 				Stmt::Func {
-					id,
+					id: _,
 					signature,
 					body,
 				} => {
@@ -286,7 +287,27 @@ impl ToInfo for HoistedScope {
 					let return_ty = signature.return_ty.convert_and_add(mappings);
 					if let Some(inner) = body {
 						let actual_return = inner.convert_and_add(mappings);
-						engine().unify(return_ty, actual_return, id.span.clone());
+						let mut engine = engine();
+						let return_ty_ty = engine.tys[&return_ty].clone();
+						let return_ty_ty = return_ty_ty.display(&engine);
+						let actual_return_ty = engine.tys[&actual_return].clone();
+						let actual_return_ty_display = actual_return_ty.display(&engine);
+						engine.unify_custom_error(
+							return_ty,
+							actual_return,
+							signature.return_ty.span.clone(),
+							"type conflict: incorrect return type",
+							vec![&format!(
+								"return type was declared to be {} but a value of type {} was returned instead{}",
+								return_ty_ty,
+								actual_return_ty_display,
+								if actual_return_ty == TypeInfo::BuiltIn(BuiltInType::Void) {
+									" (or no return statement exists)"
+								} else {
+									""
+								}
+							)],
+						);
 					}
 				}
 				// TODO: do something with is_yield
