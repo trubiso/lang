@@ -1,5 +1,9 @@
 use crate::{
-	common::{diagnostics::add_diagnostic, r#type, span::Spanned},
+	common::{
+		diagnostics::add_diagnostic,
+		r#type,
+		span::{Add, Spanned},
+	},
 	infer::type_info::TypeInfo,
 	lexer::NumberLiteralType,
 };
@@ -95,11 +99,11 @@ impl Engine {
 
 			(Bottom, _) | (_, Bottom) => Ok(()),
 
-			(Unknown, _) => {
+			(Unknown | UnknownGeneric(_), _) => {
 				self.tys.insert(a.value, TypeInfo::SameAs(b));
 				Ok(())
 			}
-			(_, Unknown) => {
+			(_, Unknown | UnknownGeneric(_)) => {
 				self.tys.insert(b.value, TypeInfo::SameAs(a));
 				Ok(())
 			}
@@ -131,6 +135,42 @@ impl Engine {
 
 			(Number(x), BuiltIn(y)) => unify_num_and_builtin(x, y),
 			(BuiltIn(y), Number(x)) => unify_num_and_builtin(x, y),
+
+			(
+				FuncSignature {
+					return_ty: ret_a,
+					args: args_a,
+					generics: gens_a,
+				},
+				FuncSignature {
+					return_ty: ret_b,
+					args: args_b,
+					generics: gens_b,
+				},
+			) => {
+				// unification is supposed to be bidirectional, but just for a moment let's say
+				// that the left hand side has the correct amount of args and generics since
+				// that's how we call this function in `Expr::Call`
+				if args_a.len() != args_b.len() {
+					return Err((
+						"incorrect number of arguments passed into function call".into(),
+						c.display(self),
+						d.display(self),
+					));
+				}
+				for (x, y) in args_a.iter().zip(args_b.iter()) {
+					self.unify_inner(*x, *y)?;
+				}
+				for i in 0..gens_a.len() {
+					let gen_a = gens_a[i];
+					let gen_b = gens_b
+						.get(i)
+						.copied()
+						.unwrap_or_else(|| self.add_ty(TypeInfo::Unknown).add_span(gen_a.span));
+					self.unify_inner(gen_a, gen_b)?;
+				}
+				self.unify_inner(ret_a, ret_b)
+			}
 
 			(a, b) => Err({
 				let a = a.display(self);

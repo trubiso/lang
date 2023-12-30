@@ -135,9 +135,16 @@ impl ToInfo for Spanned<HoistedExpr> {
 					generics,
 				};
 				let our_signature = engine().add_ty(our_signature).add_span(self.span);
-				engine()
-					.unify(func_signature, our_signature)
-					.add_span(self.span)
+				let unified_signature = engine().unify(func_signature, our_signature);
+				match unified_signature {
+					TypeInfo::FuncSignature {
+						return_ty,
+						args: _,
+						generics: _,
+					} => engine().tys[&return_ty.value].clone(),
+					_ => TypeInfo::Bottom, // an error occurred
+				}
+				.add_span(self.span)
 			}
 		}
 	}

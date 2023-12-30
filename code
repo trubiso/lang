@@ -6,13 +6,15 @@ void main() {
 	i32 a() {
 		i32 b() {
 			i32 c() {
-				return 3u;
+				return 3i;
 			}
+			return c();
 		}
+		return b();
 	}
 
 	void ploid() {
-		return 5;
+		
 	}
 
 	let y = add<i32>(2, 3);
@@ -23,7 +25,7 @@ void main() {
 	let kk = qq - 3;
 
 	f32 one = 1f32;
-	i32 two = one + 1i32;
+	i32 two = one + .1;
 
 	// let glu = fish + cat - dog;
 	// shin = 9;
