@@ -1,6 +1,6 @@
 use super::type_info::TypeId;
 use crate::common::{ident::Id, span::Spanned};
-use bimap::BiMap;
+use std::collections::HashMap;
 
 /// Maps names to types, disambiguating variable names and type names.
 ///
@@ -11,8 +11,8 @@ use bimap::BiMap;
 /// generic ("named types").
 #[derive(Debug, Default)]
 pub struct Mappings {
-	named_tys: BiMap<Id, Spanned<TypeId>>,
-	var_tys: BiMap<Id, Spanned<TypeId>>,
+	named_tys: HashMap<Id, Spanned<TypeId>>,
+	var_tys: HashMap<Id, Spanned<TypeId>>,
 }
 
 impl Mappings {
@@ -26,7 +26,7 @@ impl Mappings {
 	/// invalid access.
 	#[must_use]
 	pub fn get_named_ty(&self, id: Id) -> &Spanned<TypeId> {
-		self.named_tys.get_by_left(&id).unwrap_or_else(|| {
+		self.named_tys.get(&id).unwrap_or_else(|| {
 			panic!(
 				"tried to access nonexistent named type {} (stored named types: {:?})",
 				id, self.named_tys
@@ -44,7 +44,7 @@ impl Mappings {
 	/// invalid access.
 	#[must_use]
 	pub fn get_var_ty(&self, id: Id) -> &Spanned<TypeId> {
-		self.var_tys.get_by_left(&id).unwrap_or_else(|| {
+		self.var_tys.get(&id).unwrap_or_else(|| {
 			panic!(
 				"tried to access nonexistent var type {} (stored var types: {:?})",
 				id, self.var_tys
