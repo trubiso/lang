@@ -1,6 +1,7 @@
 use crate::{
-	common::{diagnostics::add_diagnostic, span::Spanned},
+	common::{diagnostics::add_diagnostic, r#type, span::Spanned},
 	infer::type_info::TypeInfo,
+	lexer::NumberLiteralType,
 };
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use itertools::Itertools;
@@ -26,9 +27,67 @@ impl Engine {
 		a: Spanned<TypeId>,
 		b: Spanned<TypeId>,
 	) -> Result<(), (String, String, String)> {
-		use TypeInfo::*;
+		fn disallowed_implicit_num_cast(
+			a: String,
+			b: String,
+		) -> Result<(), (String, String, String)> {
+			Err((
+				format!("disallowed implicit cast between numeric types {a} and {b}"),
+				a,
+				b,
+			))
+		}
 
-		match (self.tys[&a.value].clone(), self.tys[&b.value].clone()) {
+		use TypeInfo::*;
+		let c = self.tys[&a.value].clone();
+		let d = self.tys[&b.value].clone();
+
+		let mut unify_num_and_builtin = |x: Option<NumberLiteralType>, y: r#type::BuiltIn| {
+			let mut accept_specific_type = || {
+				self.tys.insert(a.value, TypeInfo::SameAs(b));
+				Ok(())
+			};
+			// we can safely assume both of these are numeric types, we
+			// caught voids earlier
+			match x {
+				// if no numeric type was specified
+				None => {
+					// the rhs will determine the lhs's numeric type
+					accept_specific_type()
+				}
+				// if a numeric type was specified
+				Some(x) => match (x, y) {
+					(
+						NumberLiteralType::Float { bits },
+						r#type::BuiltIn::Float { bits: desired_bits },
+					) => match bits {
+						None => accept_specific_type(),
+						Some(bits) if bits == desired_bits => accept_specific_type(),
+						_ => disallowed_implicit_num_cast(c.display(self), d.display(self)),
+					},
+					(
+						NumberLiteralType::Integer { bits, signed },
+						r#type::BuiltIn::Integer {
+							bits: desired_bits,
+							signed: desired_signed,
+						},
+					) => {
+						if signed == desired_signed {
+							match bits {
+								None => accept_specific_type(),
+								Some(bits) if bits == desired_bits => accept_specific_type(),
+								_ => disallowed_implicit_num_cast(c.display(self), d.display(self)),
+							}
+						} else {
+							disallowed_implicit_num_cast(c.display(self), d.display(self))
+						}
+					}
+					_ => disallowed_implicit_num_cast(c.display(self), d.display(self)),
+				},
+			}
+		};
+
+		match (c.clone(), d.clone()) {
 			(a, b) if a == b => Ok(()),
 
 			(SameAs(a), _) => self.unify_inner(a, b),
@@ -44,6 +103,34 @@ impl Engine {
 				self.tys.insert(b.value, TypeInfo::SameAs(a));
 				Ok(())
 			}
+
+			// void doesn't unify with anything but void itself
+			// don't need to check whether lhs is void, earlier match arm would've caught
+			(_, BuiltIn(y)) if y == r#type::BuiltIn::Void => {
+				let a = c.display(self);
+				let b = d.display(self);
+				Err((format!("({a} is a non-void type)"), a, b))
+			}
+			(BuiltIn(x), _) if x == r#type::BuiltIn::Void => {
+				let a = c.display(self);
+				let b = d.display(self);
+				Err((format!("({b} is a non-void type)"), a, b))
+			}
+
+			(BuiltIn(x), BuiltIn(y)) => {
+				if x == y {
+					Ok(())
+				} else {
+					let a = c.display(self);
+					let b = d.display(self);
+					// this is a numeric cast which must be done explicitly (no side can be void, we
+					// caught that earlier)
+					disallowed_implicit_num_cast(a, b)
+				}
+			}
+
+			(Number(x), BuiltIn(y)) => unify_num_and_builtin(x, y),
+			(BuiltIn(y), Number(x)) => unify_num_and_builtin(x, y),
 
 			(a, b) => Err({
 				let a = a.display(self);
