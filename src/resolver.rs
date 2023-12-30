@@ -14,10 +14,10 @@ use crate::{
 		stmt::Stmt,
 		typed_ident::TypedIdent,
 	},
-	hoister::{HoistedExpr, HoistedScope, HoistedScopeData, HoistedStmt},
+	hoister::{HoistedExpr, HoistedFunc, HoistedScope, HoistedScopeData, HoistedStmt},
 };
 use lazy_static::lazy_static;
-use std::{ops::AddAssign, sync::Mutex};
+use std::{ops::AddAssign, sync::Mutex, collections::HashMap};
 
 pub mod mappings;
 pub mod resolve;
@@ -132,6 +132,20 @@ impl Resolve for Signature {
 	}
 }
 
+impl Resolve for HoistedFunc {
+	fn resolve(&self, data: &HoistedScopeData, mappings: &mut Mappings) -> Self {
+		// the id will have been created for us already, no need for must exist
+		let id = self.id.resolve(data, mappings);
+		mappings.ensure_repr(id.value.id(), MapRepr::Func, self.id.span);
+		let mut mappings = mappings.clone();
+		Self {
+			id,
+			signature: self.signature.resolve(data, &mut mappings),
+			body: self.body.resolve(data, &mut mappings),
+		}
+	}
+}
+
 impl Resolve for HoistedStmt {
 	fn resolve(&self, data: &HoistedScopeData, mappings: &mut Mappings) -> Self {
 		match self {
@@ -156,21 +170,7 @@ impl Resolve for HoistedStmt {
 					value: value.resolve(data, mappings),
 				}
 			}
-			Self::Func {
-				id,
-				signature,
-				body,
-			} => {
-				// the id will have been created for us already, no need for must exist
-				let id = id.resolve(data, mappings);
-				mappings.ensure_repr(id.value.id(), MapRepr::Func, id.span);
-				let mut mappings = mappings.clone();
-				Self::Func {
-					id,
-					signature: signature.resolve(data, &mut mappings),
-					body: body.resolve(data, &mut mappings),
-				}
-			}
+			Self::Func { .. } => unreachable!(),
 			Self::Return { value, is_yield } => Self::Return {
 				value: value.resolve(data, mappings),
 				is_yield: *is_yield,
@@ -209,15 +209,15 @@ impl Resolve for HoistedScope {
 					)
 				})
 				.collect(),
-			funcs: data.funcs,
+			funcs: HashMap::default(),
 		};
-		// FIXME: this re-resolves the function and re-adds its symbols
-		new_scope.data.funcs = new_scope
+		new_scope.data.funcs = self
 			.data
 			.funcs
 			.iter()
-			.map(|(ident, func)| (ident.clone(), func.resolve(&new_scope.data, &mut mappings)))
-			.collect();
+			.map(|(ident, func)| (ident.resolve(&new_scope.data, &mut mappings), func.resolve(&new_scope.data, &mut mappings)))
+			.collect::<HashMap<Ident, Spanned<HoistedFunc>>>();
+		new_scope.data.funcs.extend(data.funcs);
 		new_scope
 	}
 }

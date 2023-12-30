@@ -1,7 +1,7 @@
 use crate::{
 	common::{
 		expr::Expr,
-		func::Signature,
+		func::Func,
 		ident::Ident,
 		r#type::Type,
 		scope::Scope,
@@ -22,7 +22,7 @@ pub struct Var {
 #[derive(Default, Debug, Clone)]
 pub struct HoistedScopeData {
 	pub vars: HashMap<Ident, Spanned<Var>>,
-	pub funcs: HashMap<Ident, Spanned<Signature>>,
+	pub funcs: HashMap<Ident, Spanned<HoistedFunc>>,
 }
 
 impl std::ops::Add for HoistedScopeData {
@@ -50,7 +50,7 @@ impl HoistedScope {
 		self.data.vars.insert(ident, var);
 	}
 
-	pub fn add_func(&mut self, ident: Ident, func: Spanned<Signature>) {
+	pub fn add_func(&mut self, ident: Ident, func: Spanned<HoistedFunc>) {
 		self.data.funcs.insert(ident, func);
 	}
 }
@@ -63,12 +63,23 @@ impl Scope for HoistedScope {
 
 impl std::fmt::Display for HoistedScope {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		self.my_fmt(f)
+		self.my_fmt(f)?;
+		f.write_str("\n")?;
+		for (id, func) in &self.data.funcs {
+			let func = format!("{id} => {func}")
+				.split('\n')
+				.map(|x| "\t".to_string() + x + "\n")
+				.reduce(|acc, b| acc + &b)
+				.unwrap_or_default();
+			f.write_fmt(format_args!("{func}"))?;
+		}
+		Ok(())
 	}
 }
 
 pub type HoistedExpr = Expr<HoistedScope>;
 pub type HoistedStmt = Stmt<HoistedScope>;
+pub type HoistedFunc = Func<HoistedScope>;
 
 trait Hoist {
 	type Output;
@@ -138,7 +149,7 @@ impl Hoist for ParserExpr {
 }
 
 impl HoistWithScope for Spanned<ParserStmt> {
-	type Output = Spanned<HoistedStmt>;
+	type Output = Option<Spanned<HoistedStmt>>;
 
 	fn hoist(self, scope: &mut HoistedScope) -> Self::Output {
 		match self.value {
@@ -150,34 +161,38 @@ impl HoistWithScope for Spanned<ParserStmt> {
 				let ident = ty_id.ident().clone();
 				let ty = ty_id.ty().clone();
 				scope.add_var(ident, Var { ty, mutable }.add_span(self.span));
-				Stmt::Create {
+				Some(Stmt::Create {
 					ty_id,
 					mutable,
 					value: value.hoist(),
-				}
+				})
 			}
-			Stmt::Set { id, value } => Stmt::Set {
+			Stmt::Set { id, value } => Some(Stmt::Set {
 				id,
 				value: value.hoist(),
-			},
+			}),
 			Stmt::Func {
 				id,
 				signature,
 				body,
 			} => {
-				scope.add_func(id.value.clone(), signature.clone().add_span(self.span));
-				Stmt::Func {
-					id,
-					signature,
-					body: body.hoist(),
-				}
+				scope.add_func(
+					id.value.clone(),
+					Func {
+						id: id.clone(),
+						signature: signature.clone(),
+						body: body.hoist(),
+					}
+					.add_span(id.span),
+				); // TODO: add the correct span
+				None
 			}
-			Stmt::Return { value, is_yield } => Stmt::Return {
+			Stmt::Return { value, is_yield } => Some(Stmt::Return {
 				value: value.hoist(),
 				is_yield,
-			},
+			}),
 		}
-		.add_span(self.span)
+		.map(|x| x.add_span(self.span))
 	}
 }
 
@@ -188,7 +203,9 @@ impl Hoist for ParserScope {
 		let mut scope = HoistedScope::default();
 		for stmt in self.stmts.clone() {
 			let stmt = stmt.hoist(&mut scope);
-			scope.stmts.push(stmt);
+			if let Some(stmt) = stmt {
+				scope.stmts.push(stmt);
+			}
 		}
 		scope
 	}

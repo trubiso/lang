@@ -26,9 +26,11 @@ pub struct Signature {
 	pub generics: Spanned<Vec<Spanned<Ident>>>,
 }
 
+#[derive(Debug, Clone)]
 pub struct Func<Sc: Scope> {
+	pub id: Spanned<Ident>,
 	pub signature: Signature,
-	pub body: Sc,
+	pub body: Option<Spanned<Sc>>,
 }
 
 impl std::fmt::Display for Attribs {
@@ -52,6 +54,17 @@ impl std::fmt::Display for Signature {
 			(&self.args.value).join_comma_wrapped("(", ")"),
 			self.attribs,
 			self.return_ty
+		))
+	}
+}
+
+impl<Sc: Scope + std::fmt::Display> std::fmt::Display for Func<Sc> {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		f.write_fmt(format_args!(
+			"{} [{}] {}",
+			self.id,
+			self.signature,
+			self.body.as_ref().map_or("".into(), |x| format!("{x}"))
 		))
 	}
 }

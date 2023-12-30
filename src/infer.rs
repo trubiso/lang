@@ -9,7 +9,7 @@ use crate::{
 		span::{Add, Spanned},
 		stmt::Stmt,
 	},
-	hoister::{HoistedExpr, HoistedScope},
+	hoister::{HoistedExpr, HoistedFunc, HoistedScope},
 	lexer::NumberLiteralType,
 };
 use lazy_static::lazy_static;
@@ -150,6 +150,47 @@ impl ToInfo for Spanned<HoistedExpr> {
 	}
 }
 
+impl ToInfo for Spanned<HoistedFunc> {
+	fn to_info(&self, mappings: &mut Mappings) -> Spanned<TypeInfo> {
+		for generic in &self.value.signature.generics.value {
+			let ty = engine().add_ty(TypeInfo::Generic(generic.value.id()));
+			mappings.insert_named_ty(generic.value.id(), ty.add_span(generic.span));
+		}
+		for arg in &self.value.signature.args.value {
+			let ty = arg.value.ty.convert_and_add(mappings);
+			mappings.insert_var_ty(arg.ident().id(), ty);
+		}
+		let return_ty = self.value.signature.return_ty.convert_and_add(mappings);
+		if let Some(inner) = &self.value.body {
+			let actual_return = inner.convert_and_add(mappings);
+			let mut engine = engine();
+			let return_ty_ty = engine.tys[&return_ty.value].clone();
+			let return_ty_ty = return_ty_ty.display(&engine);
+			let actual_return_ty = engine.tys[&actual_return.value].clone();
+			let actual_return_ty_display = actual_return_ty.display(&engine);
+			engine
+				.unify_custom_error(
+					return_ty,
+					actual_return,
+					"type conflict: incorrect return type",
+					&[&format!(
+					"return type was declared to be {} but a value of type {} was returned instead{}",
+					return_ty_ty,
+					actual_return_ty_display,
+					if actual_return_ty == TypeInfo::BuiltIn(BuiltIn::Void) {
+						" (or no return statement exists)"
+					} else {
+						""
+					}
+				)],
+				)
+				.add_span(self.span)
+		} else {
+			TypeInfo::Bottom.add_span(self.span)
+		}
+	}
+}
+
 impl ToInfo for Spanned<HoistedScope> {
 	fn to_info(&self, mappings: &mut Mappings) -> Spanned<TypeInfo> {
 		for (ident, var) in &self.value.data.vars {
@@ -163,8 +204,12 @@ impl ToInfo for Spanned<HoistedScope> {
 			mappings.insert_var_ty(ident.id(), ty);
 		}
 		for (ident, func) in &self.value.data.funcs {
-			let ty = func.convert_and_add(mappings);
+			let ty = func
+				.map_ref(|x| x.signature.clone())
+				.convert_and_add(mappings);
 			mappings.insert_var_ty(ident.id(), ty);
+			// FIXME: stop this from crashing lol
+			func.to_info(mappings);
 		}
 		let mut has_yielded_or_returned = false;
 		let mut return_type = TypeInfo::BuiltIn(BuiltIn::Void).add_span(self.span);
@@ -189,44 +234,7 @@ impl ToInfo for Spanned<HoistedScope> {
 					let value_ty = value.convert_and_add(mappings);
 					engine().unify(var_ty, value_ty);
 				}
-				Stmt::Func {
-					id: _,
-					signature,
-					body,
-				} => {
-					for generic in &signature.generics.value {
-						let ty = engine().add_ty(TypeInfo::Generic(generic.value.id()));
-						mappings.insert_named_ty(generic.value.id(), ty.add_span(generic.span));
-					}
-					for arg in &signature.args.value {
-						let ty = arg.value.ty.convert_and_add(mappings);
-						mappings.insert_var_ty(arg.ident().id(), ty);
-					}
-					let return_ty = signature.return_ty.convert_and_add(mappings);
-					if let Some(inner) = body {
-						let actual_return = inner.convert_and_add(mappings);
-						let mut engine = engine();
-						let return_ty_ty = engine.tys[&return_ty.value].clone();
-						let return_ty_ty = return_ty_ty.display(&engine);
-						let actual_return_ty = engine.tys[&actual_return.value].clone();
-						let actual_return_ty_display = actual_return_ty.display(&engine);
-						engine.unify_custom_error(
-							return_ty,
-							actual_return,
-							"type conflict: incorrect return type",
-							&[&format!(
-								"return type was declared to be {} but a value of type {} was returned instead{}",
-								return_ty_ty,
-								actual_return_ty_display,
-								if actual_return_ty == TypeInfo::BuiltIn(BuiltIn::Void) {
-									" (or no return statement exists)"
-								} else {
-									""
-								}
-							)],
-						);
-					}
-				}
+				Stmt::Func { .. } => unreachable!(),
 				// TODO: do something with is_yield
 				Stmt::Return { value, is_yield: _ } => {
 					has_yielded_or_returned = true;
