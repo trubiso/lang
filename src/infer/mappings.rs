@@ -1,6 +1,6 @@
 use super::type_info::TypeId;
 use crate::common::{ident::Id, span::Spanned};
-use std::collections::HashMap;
+use bimap::BiMap;
 
 /// Maps names to types, disambiguating variable names and type names.
 ///
@@ -11,8 +11,8 @@ use std::collections::HashMap;
 /// generic ("named types").
 #[derive(Debug, Default)]
 pub struct Mappings {
-	named_tys: HashMap<Id, Spanned<TypeId>>,
-	var_tys: HashMap<Id, Spanned<TypeId>>,
+	named_tys: BiMap<Id, Spanned<TypeId>>,
+	var_tys: BiMap<Id, Spanned<TypeId>>,
 }
 
 impl Mappings {
@@ -26,7 +26,7 @@ impl Mappings {
 	/// invalid access.
 	#[must_use]
 	pub fn get_named_ty(&self, id: Id) -> &Spanned<TypeId> {
-		self.named_tys.get(&id).unwrap_or_else(|| {
+		self.named_tys.get_by_left(&id).unwrap_or_else(|| {
 			panic!(
 				"tried to access nonexistent named type {} (stored named types: {:?})",
 				id, self.named_tys
@@ -44,7 +44,7 @@ impl Mappings {
 	/// invalid access.
 	#[must_use]
 	pub fn get_var_ty(&self, id: Id) -> &Spanned<TypeId> {
-		self.var_tys.get(&id).unwrap_or_else(|| {
+		self.var_tys.get_by_left(&id).unwrap_or_else(|| {
 			panic!(
 				"tried to access nonexistent var type {} (stored var types: {:?})",
 				id, self.var_tys
@@ -62,5 +62,23 @@ impl Mappings {
 	/// variable type.
 	pub fn insert_var_ty(&mut self, id: Id, ty: Spanned<TypeId>) {
 		self.var_tys.insert(id, ty);
+	}
+
+	/// Gets the `Id` associated to the provided `TypeId`.
+	///
+	/// This function is really inefficient and should only be called for
+	/// debugging purposes.
+	pub fn get_id_from_ty(&self, ty: TypeId) -> Option<Id> {
+		for (id, t) in &self.var_tys {
+			if t.value == ty {
+				return Some(*id);
+			}
+		}
+		for (id, t) in &self.named_tys {
+			if t.value == ty {
+				return Some(*id);
+			}
+		}
+		None
 	}
 }

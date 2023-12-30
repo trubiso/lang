@@ -241,5 +241,5 @@ impl ToInfo for Spanned<HoistedScope> {
 pub fn infer(scope: &Spanned<HoistedScope>) {
 	let mut mappings = Mappings::default();
 	scope.to_info(&mut mappings);
-	engine().dump();
+	engine().dump(&mappings);
 }

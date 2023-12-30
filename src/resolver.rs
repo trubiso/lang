@@ -211,7 +211,7 @@ impl Resolve for HoistedScope {
 				.collect(),
 			funcs: data.funcs,
 		};
-		// TODO: ponder why this works
+		// FIXME: this re-resolves the function and re-adds its symbols
 		new_scope.data.funcs = new_scope
 			.data
 			.funcs

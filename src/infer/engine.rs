@@ -11,7 +11,7 @@ use codespan_reporting::diagnostic::{Diagnostic, Label};
 use itertools::Itertools;
 use std::collections::HashMap;
 
-use super::type_info::TypeId;
+use super::{mappings::Mappings, type_info::TypeId};
 
 #[derive(Default)]
 pub struct Engine {
@@ -217,11 +217,14 @@ impl Engine {
 		self.unify_custom_error(a, b, "type conflict", &[])
 	}
 
-	pub fn dump(&self) {
+	pub fn dump(&self, mappings: &Mappings) {
 		for k in self.tys.keys().sorted() {
 			let v = &self.tys[k];
+			let id = mappings
+				.get_id_from_ty(*k)
+				.map_or("(anon)".into(), |x| format!("(@{x})"));
 			println!(
-				"@{k} -> {}",
+				"{id} @{k} -> {}",
 				v.display_custom(|x| format!("[@{x} ({})]", self.tys[&x.value].display(self)))
 			);
 		}
