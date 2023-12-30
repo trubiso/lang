@@ -118,10 +118,27 @@ impl ToInfo for Spanned<HoistedExpr> {
 			// FIXME: why do we need this clone???
 			Expr::Scope(inner) => inner.clone().add_span(self.span).to_info(mappings),
 			Expr::Call {
-				callee: _,
-				generics: _,
-				args: _,
-			} => TypeInfo::Unknown.add_span(self.span), // TODO: function calls
+				callee,
+				generics,
+				args,
+			} => {
+				let func_signature = callee.convert_and_add(mappings);
+				let return_ty = engine().add_ty(TypeInfo::Unknown).add_span(self.span);
+				let generics = generics
+					.as_ref()
+					.map(|x| x.iter().map(|x| x.convert_and_add(mappings)).collect())
+					.unwrap_or_default();
+				let args = args.iter().map(|x| x.convert_and_add(mappings)).collect();
+				let our_signature = TypeInfo::FuncSignature {
+					return_ty,
+					args,
+					generics,
+				};
+				let our_signature = engine().add_ty(our_signature).add_span(self.span);
+				engine()
+					.unify(func_signature, our_signature)
+					.add_span(self.span)
+			}
 		}
 	}
 }
